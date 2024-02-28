@@ -4,22 +4,6 @@ import base64
 import urllib.parse
 
 
-def read_sheet(credentials, sheet_id, range_name):
-    # Create a service object for interacting with the Sheets API
-    service = build('sheets', 'v4', credentials=credentials)
-
-    # Call the Sheets API
-    sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=sheet_id, range=range_name).execute()
-    values = result.get('values', [])
-
-    if not values:
-        print("No data found.")
-        return
-
-    return values
-
-
 def lambda_handler(event, context):
     # The body of the event is a base64 encoded string in a URL format
     event_base64 = event['body']
@@ -45,7 +29,6 @@ def lambda_handler(event, context):
     # Read the sheet
     sheet_id = cmd_inputs[0]
     range_name = cmd_inputs[1]
-    values = read_sheet(credentials, sheet_id, range_name)
 
     # Return a success message to the user
     return {
