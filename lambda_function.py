@@ -33,5 +33,5 @@ def lambda_handler(event, context):
     # Return a success message to the user
     return {
         'statusCode': 200,
-        'body': json.dumps('Command completed successfully. The sheet has been read. The values are: ' + str(values))
+        'body': json.dumps('Command completed successfully.')
     }
