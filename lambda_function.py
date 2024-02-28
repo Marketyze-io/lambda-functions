@@ -5,6 +5,13 @@ import urllib.parse
 import gspread
 
 
+SLACK_POST_MESSAGE_ENDPOINT = "https://slack.com/api/chat.postMessage"
+
+# HTTP Headers
+headers = {
+    "Authorization": "Bearer xoxb-241133470262-6669054380198-ac8cNCGQl10GtHNojwRIj59C",
+}
+
 # GSpread Authentication
 credentials = {
   "type": "service_account",
@@ -38,19 +45,20 @@ def lambda_handler(event, context):
 
     # Check if the command is valid
     if len(cmd_params) != 3:
+        requests.post()
         return {
             'statusCode': 200,
             'body': json.dumps('Please check your inputs. There should be three inputs separated by space.')
         }
 
-    # Send an acknowledgement to the user
+    # Send an acknowledgement to the channel
     requests.post(response_url, json={'text': command + ' command received. Now processing...'})
 
     # Read the sheet
     sheet_id = cmd_params[0]
     range_name = cmd_params[1]
 
-    # Return a success message to the user
+    # Return a success message to the channel
     return {
         'statusCode': 200,
         'body': json.dumps('Command completed successfully.')
