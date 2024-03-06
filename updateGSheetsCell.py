@@ -21,7 +21,7 @@ def lambda_handler(event, context):
     # Extract all the event parameters
     row_num = int(event['row_num'])
     col_num = int(event['col_num'])
-    new_val = event['new_val']
+    new_val = str(event['new_val'])
     spreadsheet_id = event['spreadsheet_id']
     worksheet_name = event['worksheet_name']
 
