@@ -19,8 +19,8 @@ gc = gspread.service_account_from_dict(credentials)
 
 def lambda_handler(event, context):
     # Extract all the event parameters
-    row_num = event['row_num']
-    col_num = event['col_num']
+    row_num = int(event['row_num'])
+    col_num = int(event['col_num'])
     new_val = event['new_val']
     spreadsheet_id = event['spreadsheet_id']
 
