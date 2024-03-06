@@ -19,13 +19,14 @@ gc = gspread.service_account_from_dict(credentials)
 
 def lambda_handler(event, context):
     # Extract all the event parameters
-    map_index = int(event['map_index'])+2
-    new_id = event['new_id']
+    row_num = event['row_num']
+    col_num = event['col_num']
+    new_val = event['new_val']
     spreadsheet_id = event['spreadsheet_id']
 
     # Read the sheet
     workbook = gc.open_by_key(spreadsheet_id)
     sheet = workbook.worksheet("campaign-details")
-    sheet.update_cell(map_index, 2, new_id)
+    sheet.update_cell(row_num, col_num, new_val)
 
     return
