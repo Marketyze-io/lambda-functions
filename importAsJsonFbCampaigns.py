@@ -1,7 +1,4 @@
 import json
-import requests
-import base64
-import urllib.parse
 import gspread
 
 # GSpread Authentication
@@ -35,17 +32,25 @@ def lambda_handler(event, context):
 
     records = sheet.batch_get([range])[0]
 
-    # for list in records:
+    dicts = []
 
+    for list in records:
+        dict = {
+            "name": list[0],
+            "id": list[1],
+            "objective": list[3],
+            "buying_type": list[4],
+            "status": list[5],
+            "special_ad_categories": list[11]
+        }
+        dicts.append(dict)
 
-    print(records)
+    dicts_json = json.dumps(dicts)
+    # print(dicts_json)
 
-    # Return a success message to the channel
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Command completed successfully.')
-    }
+    return dicts_json
 
+"""
 if __name__ == "__main__":
     event = {
         "account_id": "1084205746169117",
@@ -54,4 +59,4 @@ if __name__ == "__main__":
     }
 
     lambda_handler(event, None)
-
+"""
