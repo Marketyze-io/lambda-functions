@@ -45,10 +45,9 @@ def lambda_handler(event, context):
         }
         dicts.append(dict)
 
-    dicts_json = json.dumps(dicts)
     # print(dicts_json)
 
-    return dicts_json
+    return dicts
 
 """
 if __name__ == "__main__":
