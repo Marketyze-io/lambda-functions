@@ -23,11 +23,11 @@ def lambda_handler(event, context):
     col_num = int(event['col_num'])
     new_val = event['new_val']
     spreadsheet_id = event['spreadsheet_id']
-    workbook_name = event['workbook_name']
+    worksheet_name = event['worksheet_name']
 
     # Read the sheet
-    workbook = gc.open_by_key(spreadsheet_id)
-    sheet = workbook.worksheet(workbook_name)
+    worksheet = gc.open_by_key(spreadsheet_id)
+    sheet = worksheet.worksheet(worksheet_name)
     sheet.update_cell(row_num, col_num, new_val)
 
     return
