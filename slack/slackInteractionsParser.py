@@ -6,7 +6,7 @@ SLACK_PUSH_VIEWS_ENDPOINT = "https://slack.com/api/views.push"
 
 # HTTP Headers
 headers = {
-    "Authorization": "Bearer xoxb-241133470262-6669054380198-ac8cNCGQl10GtHNojwRIj59C",
+    "Authorization": "Bearer xoxb-241133470262-6786705625524-lM5i9Ider3NSERhR6wRSitDu",
 }
 
 modal_bulkFbCampaigns = {
