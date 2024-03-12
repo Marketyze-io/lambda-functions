@@ -115,8 +115,10 @@ def lambda_handler(event, context):
 			trigger_id = payload['trigger_id']
 			view_id = payload['view']['id']
 			action = payload['actions'][0]['action_id']
+			channel_id = payload['view']['private_metadata']
 			match action:
 				case 'button-bulk-fb-campaigns':
+					modal_bulkFbCampaigns['private_metadata'] = channel_id
 					requests.post(SLACK_UPDATE_VIEWS_ENDPOINT, headers=headers, data={
 						"view_id": view_id,
 						"view": json.dumps(modal_bulkFbCampaigns)
