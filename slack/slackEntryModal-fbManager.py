@@ -6,7 +6,7 @@ SLACK_OPEN_VIEWS_ENDPOINT = "https://slack.com/api/views.open"
 
 # HTTP Headers
 headers = {
-    "Authorization": "Bearer xoxb-241133470262-6669054380198-ac8cNCGQl10GtHNojwRIj59C",
+	"Authorization": "Bearer xoxb-241133470262-6786705625524-lM5i9Ider3NSERhR6wRSitDu",
 }
 
 # Modal Payload
@@ -115,19 +115,21 @@ modal = {
 }
 
 def lambda_handler(event, context):
-    event_body = event['body']
-    event_params = urllib.parse.parse_qs(event_body)
-    response_url = event_params['response_url'][0]
-    trigger_id = event_params['trigger_id'][0]
-    user_id = event_params['user_id'][0]
+	event_body = event['body']
+	event_params = urllib.parse.parse_qs(event_body)
+	response_url = event_params['response_url'][0]
+	trigger_id = event_params['trigger_id'][0]
+	user_id = event_params['user_id'][0]
+	channel_id = event_params['channel_id'][0]
+	modal['private_metadata'] = channel_id
 
-    data = {
-        "trigger_id": trigger_id,
-        "view": json.dumps(modal)
-    }
+	data = {
+		"trigger_id": trigger_id,
+		"view": json.dumps(modal)
+	}
 
-    response = requests.post(SLACK_OPEN_VIEWS_ENDPOINT, data=data, headers=headers)
+	response = requests.post(SLACK_OPEN_VIEWS_ENDPOINT, data=data, headers=headers)
 
-    return {
-        'statusCode': 200
-    }
+	return {
+		'statusCode': 200
+	}
