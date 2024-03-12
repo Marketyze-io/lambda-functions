@@ -3,6 +3,7 @@ import urllib.parse as urlparse
 import requests
 
 SLACK_PUSH_VIEWS_ENDPOINT = "https://slack.com/api/views.push"
+SLACK_UPDATE_VIEWS_ENDPOINT = "https://slack.com/api/views.update"
 SLACK_POST_MESSAGE_ENDPOINT = "https://slack.com/api/chat.postMessage"
 
 # HTTP Headers
@@ -112,11 +113,12 @@ def lambda_handler(event, context):
 		
 		case 'block_actions':
 			trigger_id = payload['trigger_id']
+			view_id = payload['view']['id']
 			action = payload['actions'][0]['action_id']
 			match action:
 				case 'button-bulk-fb-campaigns':
-					requests.post(SLACK_PUSH_VIEWS_ENDPOINT, headers=headers, data={
-						"trigger_id": trigger_id,
+					requests.post(SLACK_UPDATE_VIEWS_ENDPOINT, headers=headers, data={
+						"view_id": view_id,
 						"view": json.dumps(modal_bulkFbCampaigns)
 					})
 				case _:
