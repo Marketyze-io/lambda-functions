@@ -97,14 +97,13 @@ def lambda_handler(event, context):
 					ad_acc_id = submission['ad_acc_id_input']['ad_acc_id_input-action']['value']
 					token = submission['token_input']['token_input-action']['value']
 					# Do something with the data
-					print(payload)
 					requests.post(SLACK_POST_MESSAGE_ENDPOINT, headers=headers, data={
 						# channel is hardcoded for now
 						"channel": "C06JA4QHGBC",
 						"text": f"Spreadsheet URL: {spreadsheet_url}\nAd Account ID: {ad_acc_id}\nAccess Token: {token}"
 					})
 					return {
-						'statusCode': 200
+						"statusCode": 200
 					}
 				case _:
 					return json.dumps({
