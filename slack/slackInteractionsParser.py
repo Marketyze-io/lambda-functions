@@ -1,14 +1,20 @@
 import json
+import os
 import urllib.parse as urlparse
+import urllib.request
 import requests
 
 SLACK_PUSH_VIEWS_ENDPOINT = "https://slack.com/api/views.push"
 SLACK_UPDATE_VIEWS_ENDPOINT = "https://slack.com/api/views.update"
 SLACK_POST_MESSAGE_ENDPOINT = "https://slack.com/api/chat.postMessage"
+AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/"
+
+SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
+aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 # HTTP Headers
 headers = {
-	"Authorization": "Bearer xoxb-241133470262-6786705625524-lM5i9Ider3NSERhR6wRSitDu",
+	"Authorization": "Bearer ",
 }
 
 modal_bulkFbCampaigns = {
@@ -87,6 +93,15 @@ def lambda_handler(event, context):
 	urlQueryString = event['body']
 	parsedUrl = urlparse.parse_qs(urlQueryString)
 	payload = json.loads(parsedUrl['payload'][0])
+
+	# Get the token from AWS Parameter Store
+	secret_name = urlparse.quote(SECRET_NAME, safe="")
+	endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
+	req = urllib.request.Request(endpoint)
+	req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
+	token = urllib.request.urlopen(req).read()
+	token = json.loads(token)
+	headers['Authorization'] = f"Bearer {token['Parameter']['Value']}"
 
 	match payload['type']:
 		case 'view_submission':
