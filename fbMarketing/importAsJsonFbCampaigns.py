@@ -48,14 +48,3 @@ def lambda_handler(event, context):
     # print(dicts_json)
 
     return dicts
-
-"""
-if __name__ == "__main__":
-    event = {
-        "account_id": "1084205746169117",
-        "access_token": "EAAjcdUNrk3MBO5NNXKZAGsX0USmluou0jBJz4W9SmNGJNdVZAMd4yrFV871Gm5ERDBSICF9GWFUaedZCPgEigiKF0aFht9p62Yi5643NiXbJzoxUA2vOXQLLz2vVV8RMih5kXE3cJzAQe00XPeluZC4ojWU0z8rkcA6DfwwPwEMjzsGOZBlBkILJ62qPrcG9G",
-        "spreadsheet_id": "1GbDDulj8-J9M73Xrbeq0qmqwZPp_eppAdJ8ZcukL_3c"
-    }
-
-    lambda_handler(event, None)
-"""
