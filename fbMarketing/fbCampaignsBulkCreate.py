@@ -9,6 +9,7 @@ SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 def lambda_handler(event, context):
+    event         = json.loads(event['body'])
     channel_id    = event['channelId']
     fbAccessToken = event['fbAccessToken']
     adAccountId   = event['adAccountId']
@@ -19,9 +20,15 @@ def lambda_handler(event, context):
 
     # Get the data from Google Sheets
     gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A1?access_token={gsAccessToken}'
-    rowCount = requests.get(gsCountEndpoint).json()['values'][0][0]
+    response = requests.get(gsCountEndpoint)
+    if response.status_code != 200:
+        print(response.json())
+    rowCount = response.json()['values'][0][0]
     gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A3:L{rowCount}?access_token={gsAccessToken}'
-    data = requests.get(gsEndpoint).json()['values']
+    response = requests.get(gsEndpoint)
+    if response.status_code != 200:
+        print(response.json())
+    data = response.json()['values']
 
     # Create the campaigns in Facebook Ads Manager for rows without a campaign ID
     for row in data:
