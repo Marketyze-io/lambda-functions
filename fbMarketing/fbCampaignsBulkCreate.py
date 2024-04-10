@@ -17,6 +17,10 @@ def lambda_handler(event, context):
     spreadsheetId = event['spreadsheet_id']
 
     campaignsCreated = 0
+    campaignDetails = {
+        "valueInputOption": "USER_ENTERED",
+        "data": []
+    }
 
     # Get the data from Google Sheets
     gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A1?access_token={gsAccessToken}'
@@ -66,13 +70,21 @@ def lambda_handler(event, context):
             print(f'Response_data: {response_data}')
             campaign_id = response_data['id']
             print(f"Created campaign with ID: {campaign_id}")
-
-            # Update the Google Sheet with the campaign ID
-            gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!B{data.index(row)+3}?access_token={gsAccessToken}'
-            print("Updating Google Sheets with the campaign ID")
-            requests.put(gsUpdateEndpoint, data=json.dumps({'values': [[campaign_id]]}))
-            print("Google Sheets updated")
             campaignsCreated += 1
+
+            # Append the campaign details to the list for updating Google Sheets
+            requestData = {
+                "range": f"'campaign-details'!B{data.index(row)+3}",
+                "majorDimension": "ROWS",
+                "values": [[campaign_id]]
+            }
+            campaignDetails['data'].append(requestData)
+
+    # Update the Google Sheet with the campaign IDs
+    gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values:batchUpdate?access_token={gsAccessToken}'
+    print("Updating Google Sheets with the campaign IDs")
+    requests.post(gsUpdateEndpoint, data=json.dumps(campaignDetails))
+    print("Google Sheets updated")
 
     # Get the token from AWS Parameter Store
     secret_name = urlparse.quote(SECRET_NAME, safe="")
