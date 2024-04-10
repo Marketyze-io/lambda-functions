@@ -10,11 +10,11 @@ aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 def lambda_handler(event, context):
     event         = json.loads(event['body'])
-    channel_id    = event['channelId']
-    fbAccessToken = event['fbAccessToken']
-    adAccountId   = event['adAccountId']
-    gsAccessToken = event['gsAccessToken']
-    spreadsheetId = event['spreadsheetId']
+    channel_id    = event['channel_id']
+    fbAccessToken = event['fb_access_token']
+    adAccountId   = event['ad_account_id']
+    gsAccessToken = event['gs_access_token']
+    spreadsheetId = event['spreadsheet_id']
 
     campaignsCreated = 0
 
@@ -25,10 +25,12 @@ def lambda_handler(event, context):
         print(response.json())
     rowCount = response.json()['values'][0][0]
     gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A3:L{rowCount}?access_token={gsAccessToken}'
+    print("Getting data from Google Sheets")
     response = requests.get(gsEndpoint)
     if response.status_code != 200:
         print(response.json())
     data = response.json()['values']
+    print("Data retrieved from Google Sheets")
 
     # Create the campaigns in Facebook Ads Manager for rows without a campaign ID
     for row in data:
@@ -54,13 +56,17 @@ def lambda_handler(event, context):
 
             # Call the createFbCampaign Lambda function
             url = f'https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/campaigns/single'
+            print("Creating campaign in Facebook Ads Manager")
             response = requests.post(url, data=payload)
             response_data = response.json()
             campaign_id = response_data['id']
+            print(f"Created campaign with ID: {campaign_id}")
 
             # Update the Google Sheet with the campaign ID
             gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!B{data.index(row)+3}?access_token={gsAccessToken}'
+            print("Updating Google Sheets with the campaign ID")
             requests.put(gsUpdateEndpoint, data=json.dumps({'values': [[campaign_id]]}))
+            print("Google Sheets updated")
             campaignsCreated += 1
 
     # Get the token from AWS Parameter Store
