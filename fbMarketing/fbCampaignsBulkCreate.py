@@ -102,8 +102,9 @@ def lambda_handler(event, context):
         'channel': channel_id,
         'text': f'{campaignsCreated} campaigns created successfully!'
     }
-    requests.post(slackEndpoint, headers
+    slackRequest = requests.post(slackEndpoint, headers
         ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slackPayload)
+    print(slackRequest.json())
     print("Summary sent to Slack")
 
     return {
