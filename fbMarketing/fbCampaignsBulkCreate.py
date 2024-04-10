@@ -9,7 +9,6 @@ SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 def lambda_handler(event, context):
-    event         = json.loads(event['body'])
     channel_id    = event['channel_id']
     fbAccessToken = event['fb_access_token']
     adAccountId   = event['ad_account_id']
@@ -21,6 +20,27 @@ def lambda_handler(event, context):
         "valueInputOption": "USER_ENTERED",
         "data": []
     }
+    
+    # Get the token from AWS Parameter Store
+    secret_name = urlparse.quote(SECRET_NAME, safe="")
+    endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
+    req = urllib.request.Request(endpoint)
+    req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
+    token = urllib.request.urlopen(req).read()
+    token = json.loads(token)
+    print("Slack token retrieved")
+
+    # Send an ack to Slack
+    print("Sending ack to Slack")
+    slackEndpoint = 'https://slack.com/api/chat.postMessage'
+    slackPayload = {
+        'channel': channel_id,
+        'text': f'Starting bulk campaign creation!'
+    }
+    slackRequest = requests.post(slackEndpoint, headers
+        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slackPayload)
+    print(slackRequest.json())
+    print("Ack sent to Slack")
 
     # Get the data from Google Sheets
     gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A1?access_token={gsAccessToken}'
@@ -85,15 +105,6 @@ def lambda_handler(event, context):
     print("Updating Google Sheets with the campaign IDs")
     requests.post(gsUpdateEndpoint, data=json.dumps(campaignDetails))
     print("Google Sheets updated")
-
-    # Get the token from AWS Parameter Store
-    secret_name = urlparse.quote(SECRET_NAME, safe="")
-    endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
-    req = urllib.request.Request(endpoint)
-    req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
-    token = urllib.request.urlopen(req).read()
-    token = json.loads(token)
-    print("Slack token retrieved")
 
     # Send a summary of the results to the user in Slack
     print("Sending summary to Slack")
