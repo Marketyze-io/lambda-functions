@@ -45,13 +45,8 @@ def lambda_handler(event, context):
   response = requests.post(url, data=form_data)
   response_data = response.json()
     
-  # If the event body is in JSON form, return in a format for Slack
-  if is_json:
-    return {
-      "isBase64Encoded": False,
-      "statusCode": 200,
-      "body": json.dumps(response_data)
-    }
-    
-  # If the event body is in URL-encoded form, return in a format for Lambda Functions
-  return response_data
+  return {
+    "isBase64Encoded": False,
+    "statusCode": 200,
+    "body": json.dumps(response_data)
+  }
