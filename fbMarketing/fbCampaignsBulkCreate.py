@@ -24,13 +24,16 @@ def lambda_handler(event, context):
     if response.status_code != 200:
         print(response.json())
     rowCount = response.json()['values'][0][0]
-    gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A3:L{rowCount}?access_token={gsAccessToken}'
+    print(f"Number of rows in Google Sheets: {rowCount}")
+    rowNum = str(int(rowCount) + 2)
+    gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A3:L{rowNum}?access_token={gsAccessToken}'
     print("Getting data from Google Sheets")
     response = requests.get(gsEndpoint)
     if response.status_code != 200:
         print(response.json())
     data = response.json()['values']
     print("Data retrieved from Google Sheets")
+    print(data)
 
     # Create the campaigns in Facebook Ads Manager for rows without a campaign ID
     for row in data:
@@ -57,8 +60,10 @@ def lambda_handler(event, context):
             # Call the createFbCampaign Lambda function
             url = f'https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/campaigns/single'
             print("Creating campaign in Facebook Ads Manager")
+            print(f'Payload: {payload}')
             response = requests.post(url, data=payload)
             response_data = response.json()
+            print(f'Response_data: {response_data}')
             campaign_id = response_data['id']
             print(f"Created campaign with ID: {campaign_id}")
 
@@ -76,8 +81,10 @@ def lambda_handler(event, context):
     req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
     token = urllib.request.urlopen(req).read()
     token = json.loads(token)
+    print("Slack token retrieved")
 
     # Send a summary of the results to the user in Slack
+    print("Sending summary to Slack")
     slackEndpoint = 'https://slack.com/api/chat.postMessage'
     slackPayload = {
         'channel': channel_id,
@@ -85,6 +92,7 @@ def lambda_handler(event, context):
     }
     requests.post(slackEndpoint, headers
         ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slackPayload)
+    print("Summary sent to Slack")
 
     return {
         'statusCode': 200
