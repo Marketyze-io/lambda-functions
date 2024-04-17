@@ -8,6 +8,12 @@ AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
+def get_index(list, key, value):
+    for i, dic in enumerate(list):
+        if dic[key] == value:
+            return i
+    return None
+
 def lambda_handler(event, context):
     channel_id      = event['channel_id']
     fb_access_token = event['fb_access_token']
@@ -83,7 +89,7 @@ def lambda_handler(event, context):
             # Ignore this row
             continue
         # Check if the row has a campaign ID and is not found in Facebook campaigns
-        elif row[1] not in fb_campaigns["id"]:
+        elif not any(campaign["id"] == row[1] for campaign in fb_campaigns):
             # Delete this row
             row_index = gs_data.index(row) + 3
             deletion_payload["requests"].append({
@@ -100,7 +106,7 @@ def lambda_handler(event, context):
         # Check if the row has a campaign ID and is found in Facebook campaigns
         else:
             # Update this row
-            fb_campaigns_index = fb_campaigns["id"].index(row[1])
+            fb_campaigns_index = get_index(fb_campaigns, "id", row[1])
             campaign_name = fb_campaigns[fb_campaigns_index]["name"]
             campaign_id   = fb_campaigns[fb_campaigns_index]["id"]
             campaign_objective = fb_campaigns[fb_campaigns_index]["objective"]
