@@ -56,7 +56,7 @@ def lambda_handler(event, context):
     if response.status_code != 200:
         print(response.json())
     rowCount = int(response.json()['values'][0][0])
-    print(f"Number of rows in Google Sheets: {rowCount}")
+    print(f"Number of rows in Google Sheets: {str(rowCount)}")
     lastRowNum = str(rowCount + 2)
     gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/\'campaign-details\'!A3:L{lastRowNum}?access_token={gs_access_token}'
     print("Getting data from Google Sheets")
@@ -133,13 +133,13 @@ def lambda_handler(event, context):
             gambling   = "TRUE" if "ONLINE_GAMBLING_AND_GAMING" in special_ad_categories else "FALSE"
 
             requestData = {
-                "range": f"'campaign-details'!C{gs_data.index(row)+3}:H{gs_data.index(row)+4}",
+                "range": f"'campaign-details'!C{str(gs_data.index(row)+3)}:H{str(gs_data.index(row)+4)}",
                 "majorDimension": "ROWS",
                 "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling, special_ad_categories]]
             }
             update_payload['data'].append(requestData)
             campaigns_updated_count += 1
-            fb_campaigns["id"].remove(row[1])
+            fb_campaigns.pop(fb_campaigns_index)
     
     # Add new rows for campaigns not found in Google Sheets
     for campaign in fb_campaigns:
@@ -169,7 +169,7 @@ def lambda_handler(event, context):
         gambling   = "TRUE" if "ONLINE_GAMBLING_AND_GAMING" in special_ad_categories else "FALSE"
 
         requestData = {
-            "range": f"'campaign-details'!A{lastRowNum+campaigns_added_count+1}:L{lastRowNum+campaigns_added_count+2}",
+            "range": f"'campaign-details'!A{str(lastRowNum+campaigns_added_count+1)}:L{str(lastRowNum+campaigns_added_count+2)}",
             "majorDimension": "ROWS",
             "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling, special_ad_categories]]
         }
