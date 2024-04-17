@@ -40,7 +40,7 @@ def lambda_handler(event, context):
 
     # Get the campaigns from Facebook
     print("Getting campaigns from Facebook")
-    fb_endpoint = f'https://graph.facebook.com/v19.0/act_{ad_account_id}/campaigns?fields=["id", "name", "objective", "buying_type", "status", "special_ad_categories"]&access_token={fb_access_token}'
+    fb_endpoint = f'https://graph.facebook.com/v19.0/{ad_account_id}/campaigns?fields=["id", "name", "objective", "buying_type", "status", "special_ad_categories"]&access_token={fb_access_token}'
     fb_request = requests.get(fb_endpoint)
     fb_campaigns = fb_request.json()['data']
     print("Campaigns retrieved from Facebook")
