@@ -15,8 +15,6 @@ def lambda_handler(event, context):
     gs_access_token = event['gs_access_token']
     spreadsheet_id  = event['spreadsheet_id']
 
-    campaigns_updated_count = 0
-
     # Get the token from AWS Parameter Store
     secret_name = urlparse.quote(SECRET_NAME, safe="")
     endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
@@ -51,10 +49,10 @@ def lambda_handler(event, context):
     response = requests.get(gsCountEndpoint)
     if response.status_code != 200:
         print(response.json())
-    rowCount = response.json()['values'][0][0]
+    rowCount = int(response.json()['values'][0][0])
     print(f"Number of rows in Google Sheets: {rowCount}")
-    rowNum = str(int(rowCount) + 2)
-    gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/\'campaign-details\'!A3:L{rowNum}?access_token={gs_access_token}'
+    lastRowNum = str(rowCount + 2)
+    gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/\'campaign-details\'!A3:L{lastRowNum}?access_token={gs_access_token}'
     print("Getting data from Google Sheets")
     response = requests.get(gsEndpoint)
     if response.status_code != 200:
@@ -62,6 +60,136 @@ def lambda_handler(event, context):
     gs_data = response.json()['values']
     print("Data retrieved from Google Sheets")
     print(gs_data)
+
+    # Prepare the data for Google Sheets
+    campaigns_updated_count = 0
+    campaigns_deleted_count = 0
+    campaigns_added_count = 0
+    update_payload = {
+        "valueInputOption": "USER_ENTERED",
+        "data": []
+    }
+    deletion_payload = {
+        "requests": []
+    }
+    append_payload = {
+        "valueInputOption": "USER_ENTERED",
+        "data": []
+    }
+
+    for row in gs_data:
+        # Check if the row has no campaign ID
+        if row[1] == "":
+            # Ignore this row
+            continue
+        # Check if the row has a campaign ID and is not found in Facebook campaigns
+        elif row[1] not in fb_campaigns["id"]:
+            # Delete this row
+            row_index = gs_data.index(row) + 3
+            deletion_payload["requests"].append({
+                "deleteDimension": {
+                    "range": {
+                        "sheetId": 0,
+                        "dimension": "ROWS",
+                        "startIndex": row_index - 1,
+                        "endIndex": row_index
+                    }
+                }
+            })
+            campaigns_deleted_count += 1
+        # Check if the row has a campaign ID and is found in Facebook campaigns
+        else:
+            # Update this row
+            fb_campaigns_index = fb_campaigns["id"].index(row[1])
+            campaign_name = fb_campaigns[fb_campaigns_index]["name"]
+            campaign_id   = fb_campaigns[fb_campaigns_index]["id"]
+            campaign_objective = fb_campaigns[fb_campaigns_index]["objective"]
+            match campaign_objective:
+                case "OUTCOME_AWARENESS":
+                    campaign_objective_dropdown = "Awareness"
+                case "OUTCOME_TRAFFIC":
+                    campaign_objective_dropdown = "Traffic"
+                case "OUTCOME_ENGAGEMENT":
+                    campaign_objective_dropdown = "Engagement"
+                case "OUTCOME_LEADS":
+                    campaign_objective_dropdown = "Leads"
+                case "OUTCOME_APP_PROMOTION":
+                    campaign_objective_dropdown = "App Promotion"
+                case "OUTCOME_SALES":
+                    campaign_objective_dropdown = "Sales"
+            campaign_buying_type = fb_campaigns[fb_campaigns_index]["buying_type"]
+            campaign_status = fb_campaigns[fb_campaigns_index]["status"]
+            special_ad_categories = fb_campaigns[fb_campaigns_index]["special_ad_categories"]
+            credit     = "TRUE" if "CREDIT"                     in special_ad_categories else "FALSE"
+            employment = "TRUE" if "EMPLOYMENT"                 in special_ad_categories else "FALSE"
+            housing    = "TRUE" if "HOUSING"                    in special_ad_categories else "FALSE"
+            politics   = "TRUE" if "ISSUES_ELECTIONS_POLITICS"  in special_ad_categories else "FALSE"
+            gambling   = "TRUE" if "ONLINE_GAMBLING_AND_GAMING" in special_ad_categories else "FALSE"
+
+            requestData = {
+                "range": f"'campaign-details'!C{gs_data.index(row)+3}:H{gs_data.index(row)+4}",
+                "majorDimension": "ROWS",
+                "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling, special_ad_categories]]
+            }
+            update_payload['data'].append(requestData)
+            campaigns_updated_count += 1
+            fb_campaigns["id"].remove(row[1])
+    
+    # Add new rows for campaigns not found in Google Sheets
+    for campaign in fb_campaigns:
+        campaign_name = campaign["name"]
+        campaign_id   = campaign["id"]
+        campaign_objective = campaign["objective"]
+        match campaign_objective:
+            case "OUTCOME_AWARENESS":
+                campaign_objective_dropdown = "Awareness"
+            case "OUTCOME_TRAFFIC":
+                campaign_objective_dropdown = "Traffic"
+            case "OUTCOME_ENGAGEMENT":
+                campaign_objective_dropdown = "Engagement"
+            case "OUTCOME_LEADS":
+                campaign_objective_dropdown = "Leads"
+            case "OUTCOME_APP_PROMOTION":
+                campaign_objective_dropdown = "App Promotion"
+            case "OUTCOME_SALES":
+                campaign_objective_dropdown = "Sales"
+        campaign_buying_type = campaign["buying_type"]
+        campaign_status = campaign["status"]
+        special_ad_categories = campaign["special_ad_categories"]
+        credit     = "TRUE" if "CREDIT"                     in special_ad_categories else "FALSE"
+        employment = "TRUE" if "EMPLOYMENT"                 in special_ad_categories else "FALSE"
+        housing    = "TRUE" if "HOUSING"                    in special_ad_categories else "FALSE"
+        politics   = "TRUE" if "ISSUES_ELECTIONS_POLITICS"  in special_ad_categories else "FALSE"
+        gambling   = "TRUE" if "ONLINE_GAMBLING_AND_GAMING" in special_ad_categories else "FALSE"
+
+        requestData = {
+            "range": f"'campaign-details'!A{lastRowNum+campaigns_added_count+1}:L{lastRowNum+campaigns_added_count+2}",
+            "majorDimension": "ROWS",
+            "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling, special_ad_categories]]
+        }
+        append_payload['data'].append(requestData)
+        campaigns_added_count += 1
+
+    # Update the Google Sheets
+    print("Updating existing campaigns in Google Sheets")
+    gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values:batchUpdate?access_token={gs_access_token}'
+    response = requests.post(gsUpdateEndpoint, json=update_payload)
+    print(response.json())
+    print("Existing campaigns updated")
+
+    # Add new campaigns to Google Sheets
+    print("Adding new campaigns to Google Sheets")
+    gsAppendEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values:batchUpdate?access_token={gs_access_token}'
+    response = requests.post(gsAppendEndpoint, json=append_payload)
+    print(response.json())
+    print("New campaigns added")
+
+    # Delete rows not found in Facebook campaigns
+    print("Deleting rows not found in Facebook campaigns")
+    gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}'
+    response = requests.post(gsUpdateEndpoint, json=deletion_payload)
+    print(response.json())
+    print("Rows deleted")
 
     return {
         'statusCode': 200,
