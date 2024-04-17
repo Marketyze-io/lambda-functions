@@ -46,6 +46,23 @@ def lambda_handler(event, context):
     print("Campaigns retrieved from Facebook")
     print(fb_campaigns)
 
+    # Get the data from Google Sheets
+    gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/\'campaign-details\'!A1?access_token={gs_access_token}'
+    response = requests.get(gsCountEndpoint)
+    if response.status_code != 200:
+        print(response.json())
+    rowCount = response.json()['values'][0][0]
+    print(f"Number of rows in Google Sheets: {rowCount}")
+    rowNum = str(int(rowCount) + 2)
+    gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/\'campaign-details\'!A3:L{rowNum}?access_token={gs_access_token}'
+    print("Getting data from Google Sheets")
+    response = requests.get(gsEndpoint)
+    if response.status_code != 200:
+        print(response.json())
+    gs_data = response.json()['values']
+    print("Data retrieved from Google Sheets")
+    print(gs_data)
+
     return {
         'statusCode': 200,
         'body': json.dumps('Hello from Lambda!')
