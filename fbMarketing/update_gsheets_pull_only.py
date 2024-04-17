@@ -201,7 +201,7 @@ def lambda_handler(event, context):
     print("Sending message to Slack")
     slack_payload = {
         'channel': channel_id,
-        'text': f'Campaigns updated: {campaigns_updated_count}\nCampaigns deleted: {campaigns_deleted_count}\nCampaigns added: {campaigns_added_count}'
+        'text': f'I\'m finished updating the spreadsheet! Here\'s what I did:\n\nCampaigns updated: {campaigns_updated_count}\nCampaigns added: {campaigns_added_count}\nCampaigns deleted: {campaigns_deleted_count}'
     }
     slack_request = requests.post(slack_endpoint, headers
         ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
