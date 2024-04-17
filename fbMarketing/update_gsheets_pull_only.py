@@ -197,6 +197,17 @@ def lambda_handler(event, context):
     print(response.json())
     print("Rows deleted")
 
+    # Send a message to Slack
+    print("Sending message to Slack")
+    slack_payload = {
+        'channel': channel_id,
+        'text': f'Campaigns updated: {campaigns_updated_count}\nCampaigns deleted: {campaigns_deleted_count}\nCampaigns added: {campaigns_added_count}'
+    }
+    slack_request = requests.post(slack_endpoint, headers
+        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
+    print(slack_request.json())
+    print("Message sent to Slack")
+
     return {
         'statusCode': 200,
         'body': json.dumps('Hello from Lambda!')
