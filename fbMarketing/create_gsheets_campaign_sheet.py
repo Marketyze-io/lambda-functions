@@ -9,6 +9,7 @@ SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 TEMPLATE_SPREADSHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
+TEMPLATE_SHEET_ID = "987478379"
 
 def lambda_handler(event, context):
     channel_id      = event['channel_id']
@@ -48,9 +49,10 @@ def lambda_handler(event, context):
     payload = {
         "destinationSpreadsheetId": spreadsheet_id,
     }
-    gs_copy_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{TEMPLATE_SPREADSHEET_ID}/sheets/campaign-details:copyTo?access_token={gs_access_token}"
+    gs_copy_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{TEMPLATE_SPREADSHEET_ID}/sheets/{TEMPLATE_SHEET_ID}:copyTo?access_token={gs_access_token}"
     gs_response = requests.post(gs_copy_endpoint, json=payload)
     if gs_response.status_code != 200:
+        print(gs_response.json())
         # Send a message to Slack
         slack_endpoint = 'https://slack.com/api/chat.postMessage'
         slack_payload = {
