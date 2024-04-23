@@ -168,10 +168,11 @@ def lambda_handler(event, context):
         politics   = "TRUE" if "ISSUES_ELECTIONS_POLITICS"  in special_ad_categories else "FALSE"
         gambling   = "TRUE" if "ONLINE_GAMBLING_AND_GAMING" in special_ad_categories else "FALSE"
 
+        new_row_index = int(lastRowNum) + campaigns_added_count
         requestData = {
-            "range": f"'campaign-details'!A{str(int(lastRowNum)+campaigns_added_count+1)}:L{str(int(lastRowNum)+campaigns_added_count+2)}",
+            "range": f"'campaign-details'!A{str(new_row_index+1)}:K{str(new_row_index+2)}",
             "majorDimension": "ROWS",
-            "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling, special_ad_categories]]
+            "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling]]
         }
         append_payload['data'].append(requestData)
         campaigns_added_count += 1
