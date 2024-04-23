@@ -14,6 +14,12 @@ def get_index(list, key, value):
             return i
     return None
 
+def get_campaign_details_sheet_id(list):
+    for i, dic in enumerate(list):
+        if dic['properties']['title'] == 'campaign-details':
+            return dic['properties']['sheetId']
+    return None
+
 def lambda_handler(event, context):
     channel_id      = event['channel_id']
     fb_access_token = event['fb_access_token']
@@ -66,6 +72,11 @@ def lambda_handler(event, context):
         }
 
     # Get the data from Google Sheets
+    gsSheetIdEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}?fields=sheets.properties&access_token={gs_access_token}'
+    response = requests.get(gsSheetIdEndpoint)
+    if response.status_code != 200:
+        print(response.json())
+    sheetId = get_campaign_details_sheet_id(response.json()['sheets'])
     gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/\'campaign-details\'!A1?access_token={gs_access_token}'
     response = requests.get(gsCountEndpoint)
     if response.status_code != 200:
@@ -110,7 +121,7 @@ def lambda_handler(event, context):
             deletion_payload["requests"].append({
                 "deleteDimension": {
                     "range": {
-                        "sheetId": 0,
+                        "sheetId": sheetId,
                         "dimension": "ROWS",
                         "startIndex": row_index - 1,
                         "endIndex": row_index
