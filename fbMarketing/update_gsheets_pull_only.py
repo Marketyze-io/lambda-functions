@@ -50,6 +50,21 @@ def lambda_handler(event, context):
     print("Campaigns retrieved from Facebook")
     print(fb_campaigns)
 
+    # Check if the campaign-details sheet exists
+    aws_lambda_endpoint = 'https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/campaigns/update/sheet'
+    aws_lambda_payload = {
+        'channel_id'     : channel_id,
+        'spreadsheet_id' : spreadsheet_id,
+        'gs_access_token': gs_access_token
+    }
+    aws_lambda_request = requests.post(aws_lambda_endpoint, json=aws_lambda_payload)
+    print(aws_lambda_request.json())
+    if aws_lambda_request.status_code != 200:
+        return {
+            'statusCode': 500,
+            'body': json.dumps('Error updating Google Sheets')
+        }
+
     # Get the data from Google Sheets
     gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/\'campaign-details\'!A1?access_token={gs_access_token}'
     response = requests.get(gsCountEndpoint)
