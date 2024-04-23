@@ -178,25 +178,34 @@ def lambda_handler(event, context):
         campaigns_added_count += 1
 
     # Update the Google Sheets
-    print("Updating existing campaigns in Google Sheets")
-    gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values:batchUpdate?access_token={gs_access_token}'
-    response = requests.post(gsUpdateEndpoint, json=update_payload)
-    print(response.json())
-    print("Existing campaigns updated")
+    if campaigns_updated_count == 0:
+        print("No existing campaigns to update")
+    else:
+        print("Updating existing campaigns in Google Sheets")
+        gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values:batchUpdate?access_token={gs_access_token}'
+        response = requests.post(gsUpdateEndpoint, json=update_payload)
+        print(response.json())
+        print("Existing campaigns updated")
 
     # Add new campaigns to Google Sheets
-    print("Adding new campaigns to Google Sheets")
-    gsAppendEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values:batchUpdate?access_token={gs_access_token}'
-    response = requests.post(gsAppendEndpoint, json=append_payload)
-    print(response.json())
-    print("New campaigns added")
+    if campaigns_added_count == 0:
+        print("No new campaigns to add")
+    else:
+        print("Adding new campaigns to Google Sheets")
+        gsAppendEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values:batchUpdate?access_token={gs_access_token}'
+        response = requests.post(gsAppendEndpoint, json=append_payload)
+        print(response.json())
+        print("New campaigns added")
 
     # Delete rows not found in Facebook campaigns
-    print("Deleting rows not found in Facebook campaigns")
-    gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}'
-    response = requests.post(gsUpdateEndpoint, json=deletion_payload)
-    print(response.json())
-    print("Rows deleted")
+    if campaigns_deleted_count == 0:
+        print("No rows to delete")
+    else:
+        print("Deleting rows not found in Facebook campaigns")
+        gsUpdateEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}'
+        response = requests.post(gsUpdateEndpoint, json=deletion_payload)
+        print(response.json())
+        print("Rows deleted")
 
     # Send a message to Slack
     print("Sending message to Slack")
