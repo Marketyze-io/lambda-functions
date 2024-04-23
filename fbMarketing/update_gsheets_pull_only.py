@@ -133,9 +133,9 @@ def lambda_handler(event, context):
             gambling   = "TRUE" if "ONLINE_GAMBLING_AND_GAMING" in special_ad_categories else "FALSE"
 
             requestData = {
-                "range": f"'campaign-details'!C{str(gs_data.index(row)+3)}:H{str(gs_data.index(row)+4)}",
+                "range": f"'campaign-details'!A{str(gs_data.index(row)+3)}:K{str(gs_data.index(row)+4)}",
                 "majorDimension": "ROWS",
-                "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling, special_ad_categories]]
+                "values": [[campaign_name, campaign_id, campaign_objective_dropdown, campaign_objective, campaign_buying_type, campaign_status, credit, employment, housing, politics, gambling]]
             }
             update_payload['data'].append(requestData)
             campaigns_updated_count += 1
