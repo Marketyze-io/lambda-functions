@@ -118,7 +118,7 @@ def lambda_handler(event, context):
         elif not any(campaign["id"] == row[1] for campaign in fb_campaigns):
             # Delete this row
             row_index = gs_data.index(row) + 3
-            deletion_payload["requests"].append({
+            deletion_payload["requests"].insert(0, {
                 "deleteDimension": {
                     "range": {
                         "sheetId": sheetId,
