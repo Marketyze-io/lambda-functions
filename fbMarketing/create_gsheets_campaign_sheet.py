@@ -66,6 +66,24 @@ def lambda_handler(event, context):
             'body': json.dumps('Error creating sheet')
         }
     
+    # Rename the sheet
+    sheet_id = gs_response.json()['sheetId']
+    payload = {
+        "requests": [
+            {
+                "updateSheetProperties": {
+                    "properties": {
+                        "sheetId": sheet_id,
+                        "title": "campaign-details"
+                    },
+                    "fields": "title"
+                }
+            }
+        ]
+    }
+    gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
+    gs_response = requests.post(gs_rename_endpoint, json=payload)
+
     # Send a message to Slack
     slack_endpoint = 'https://slack.com/api/chat.postMessage'
     slack_payload = {
