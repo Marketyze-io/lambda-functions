@@ -9,6 +9,7 @@ def lambda_handler(event, context):
     if event_body.startswith('{'):
         event_params          = json.loads(event_body)
         ad_account_id      = event_params['ad_account_id']
+        access_token       = event_params['access_token']
         adset_name         = event_params['adset_name']
         campaign_id        = event_params['campaign_id']
         destination_type   = event_params['destination_type']
@@ -26,6 +27,7 @@ def lambda_handler(event, context):
     else:
         event_params          = urlparse.parse_qs(event_body)
         ad_account_id      = event_params['ad_account_id'][0]
+        access_token
         adset_name         = event_params['adset_name'][0]
         campaign_id        = event_params['campaign_id'][0]
         destination_type   = event_params['destination_type'][0]
@@ -61,8 +63,12 @@ def lambda_handler(event, context):
     print(f'form_data: {form_data}')
 
     url = f'https://graph.facebook.com/v19.0/{ad_account_id}/adsets'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {access_token}'
+    }
 
-    response = requests.post(url, data=form_data)
+    response = requests.post(url, headers=headers, data=form_data)
     print(f'response: {response.json()}')
     response_data = response.json()
     print(f'response_data: {response_data}')
