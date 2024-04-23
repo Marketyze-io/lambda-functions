@@ -57,7 +57,7 @@ def lambda_handler(event, context):
         'spreadsheet_id' : spreadsheet_id,
         'gs_access_token': gs_access_token
     }
-    aws_lambda_request = requests.post(aws_lambda_endpoint, json=aws_lambda_payload)
+    aws_lambda_request = requests.get(aws_lambda_endpoint, json=aws_lambda_payload)
     print(aws_lambda_request.json())
     if aws_lambda_request.status_code != 200:
         return {
