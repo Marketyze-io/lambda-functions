@@ -12,6 +12,15 @@ SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 GOOGLE_SHEETS_SHEET_NAME = 'adset-details'
 
+def slack_post_message(channel_id, token, message):
+    slack_payload = {
+        'channel': channel_id,
+        'text': message
+    }
+    slack_request = requests.post(SLACK_POST_MESSAGE_ENDPOINT, headers
+        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
+    print(slack_request.json())
+
 def lambda_handler(event, context):
     channel_id    = event['channel_id']
     fb_access_token = event['fb_access_token']
@@ -36,13 +45,7 @@ def lambda_handler(event, context):
 
     # Send an ack to Slack
     print("Sending ack to Slack")
-    slack_payload = {
-        'channel': channel_id,
-        'text': f'Starting bulk adset creation!'
-    }
-    slack_request = requests.post(SLACK_POST_MESSAGE_ENDPOINT, headers
-        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
-    print(slack_request.json())
+    slack_post_message(channel_id, token, 'Starting bulk adset creation!')
     print("Ack sent to Slack")
 
     # Get the data from Google Sheets
@@ -126,6 +129,12 @@ def lambda_handler(event, context):
             response = requests.post(url, data=payload)
             response_data = response.json()
             print(f'Response_data: {response_data}')
+
+            if 'error' in response_data:
+                print(f"Error creating adset: {response_data['error']['error_user_msg']}")
+                slack_post_message(channel_id, token, f"Whoops! There's been a problem with creating an adset!\n\nAdset Name: {adset_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent adsets will not be created. Please check the data in Google Sheets and try again.")
+                break
+
             adset_id = response_data['id']
             print(f"Created adset with ID: {adset_id}")
             adsets_created += 1
@@ -146,14 +155,7 @@ def lambda_handler(event, context):
 
     # Send a summary of the results to the user in Slack
     print("Sending summary to Slack")
-    slackEndpoint = 'https://slack.com/api/chat.postMessage'
-    slackPayload = {
-        'channel': channel_id,
-        'text': f'{adsets_created} adsets created successfully!'
-    }
-    slackRequest = requests.post(slackEndpoint, headers
-        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slackPayload)
-    print(slackRequest.json())
+    slack_post_message(channel_id, token, f'{adsets_created} adsets created successfully!')
     print("Summary sent to Slack")
 
     return {
