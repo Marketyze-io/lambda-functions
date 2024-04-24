@@ -27,7 +27,7 @@ def lambda_handler(event, context):
     else:
         event_params          = urlparse.parse_qs(event_body)
         ad_account_id      = event_params['ad_account_id'][0]
-        access_token
+        access_token       = event_params['access_token'][0]
         adset_name         = event_params['adset_name'][0]
         campaign_id        = event_params['campaign_id'][0]
         destination_type   = event_params['destination_type'][0]
