@@ -108,7 +108,7 @@ def lambda_handler(event, context):
 
             # Append the adset details to the list for updating Google Sheets
             request_data = {
-                "range": f"'{GOOGLE_SHEETS_SHEET_NAME}'!B{data.index(row)+2}",
+                "range": f"'{GOOGLE_SHEETS_SHEET_NAME}'!B{data.index(row)+3}",
                 "majorDimension": "ROWS",
                 "values": [[adset_id]]
             }
