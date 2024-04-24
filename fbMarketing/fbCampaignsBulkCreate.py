@@ -8,6 +8,29 @@ AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
+SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
+GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
+GOOGLE_SHEETS_SHEET_NAME = 'campaign-details'
+
+def slack_post_message(channel_id, token, message):
+    slack_payload = {
+        'channel': channel_id,
+        'text': message
+    }
+    slack_request = requests.post(SLACK_POST_MESSAGE_ENDPOINT, headers
+        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
+    print(slack_request.json())
+
+def get_aws_secret(secret_name):
+    secret_name = urlparse.quote(secret_name, safe="")
+    endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
+    req = urllib.request.Request(endpoint)
+    req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
+    token = urllib.request.urlopen(req).read()
+    token = json.loads(token)
+    print("Slack token retrieved")
+    return token
+
 def lambda_handler(event, context):
     channel_id    = event['channel_id']
     fbAccessToken = event['fb_access_token']
@@ -22,35 +45,22 @@ def lambda_handler(event, context):
     }
     
     # Get the token from AWS Parameter Store
-    secret_name = urlparse.quote(SECRET_NAME, safe="")
-    endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
-    req = urllib.request.Request(endpoint)
-    req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
-    token = urllib.request.urlopen(req).read()
-    token = json.loads(token)
-    print("Slack token retrieved")
+    token = get_aws_secret(SECRET_NAME)
 
     # Send an ack to Slack
     print("Sending ack to Slack")
-    slackEndpoint = 'https://slack.com/api/chat.postMessage'
-    slackPayload = {
-        'channel': channel_id,
-        'text': f'Starting bulk campaign creation!'
-    }
-    slackRequest = requests.post(slackEndpoint, headers
-        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slackPayload)
-    print(slackRequest.json())
+    slack_post_message(channel_id, token, ':rocket: Starting bulk campaign creation! :rocket:')
     print("Ack sent to Slack")
 
     # Get the data from Google Sheets
-    gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A1?access_token={gsAccessToken}'
+    gsCountEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'{GOOGLE_SHEETS_SHEET_NAME}\'!A1?access_token={gsAccessToken}'
     response = requests.get(gsCountEndpoint)
     if response.status_code != 200:
         print(response.json())
     rowCount = response.json()['values'][0][0]
     print(f"Number of rows in Google Sheets: {rowCount}")
     rowNum = str(int(rowCount) + 2)
-    gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'campaign-details\'!A3:L{rowNum}?access_token={gsAccessToken}'
+    gsEndpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}/values/\'{GOOGLE_SHEETS_SHEET_NAME}\'!A3:L{rowNum}?access_token={gsAccessToken}'
     print("Getting data from Google Sheets")
     response = requests.get(gsEndpoint)
     if response.status_code != 200:
@@ -94,7 +104,7 @@ def lambda_handler(event, context):
 
             # Append the campaign details to the list for updating Google Sheets
             requestData = {
-                "range": f"'campaign-details'!B{data.index(row)+3}",
+                "range": f"'{GOOGLE_SHEETS_SHEET_NAME}'!B{data.index(row)+3}",
                 "majorDimension": "ROWS",
                 "values": [[campaign_id]]
             }
@@ -108,14 +118,7 @@ def lambda_handler(event, context):
 
     # Send a summary of the results to the user in Slack
     print("Sending summary to Slack")
-    slackEndpoint = 'https://slack.com/api/chat.postMessage'
-    slackPayload = {
-        'channel': channel_id,
-        'text': f'{campaignsCreated} campaigns created successfully!'
-    }
-    slackRequest = requests.post(slackEndpoint, headers
-        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slackPayload)
-    print(slackRequest.json())
+    slack_post_message(channel_id, token, f':tada: {campaignsCreated} campaigns created successfully! :tada:')
     print("Summary sent to Slack")
 
     return {
