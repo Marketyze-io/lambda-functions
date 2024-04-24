@@ -21,6 +21,16 @@ def slack_post_message(channel_id, token, message):
         ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
     print(slack_request.json())
 
+def get_aws_secret(secret_name):
+    secret_name = urlparse.quote(secret_name, safe="")
+    endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
+    req = urllib.request.Request(endpoint)
+    req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
+    token = urllib.request.urlopen(req).read()
+    token = json.loads(token)
+    print("Slack token retrieved")
+    return token
+
 def lambda_handler(event, context):
     channel_id    = event['channel_id']
     fb_access_token = event['fb_access_token']
@@ -36,13 +46,7 @@ def lambda_handler(event, context):
     error_flag = False
     
     # Get the token from AWS Parameter Store
-    secret_name = urlparse.quote(SECRET_NAME, safe="")
-    endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
-    req = urllib.request.Request(endpoint)
-    req.add_header('X-Aws-Parameters-Secrets-Token', aws_session_token)
-    token = urllib.request.urlopen(req).read()
-    token = json.loads(token)
-    print("Slack token retrieved")
+    token = get_aws_secret(SECRET_NAME)
 
     # Send an ack to Slack
     print("Sending ack to Slack")
