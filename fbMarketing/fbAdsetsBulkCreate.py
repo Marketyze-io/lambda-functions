@@ -78,6 +78,30 @@ def lambda_handler(event, context):
             start_time = row[14]
             end_time = row[15]
 
+            # temporary targeting as placeholder
+            targeting = {
+                "age_min": 21,
+                "targeting_automation": {
+                    "advantage_audience": 1
+                },
+                "flexible_spec": [
+                    {
+                        "behaviors": [{"id":6002714895372,"name":"All travelers"}],
+                        "interests": [
+                            {"id":6003107902433,"name":"Association football (Soccer)"},
+                            {"id":6003139266461,"name":"Movies"}
+                        ]
+                    },
+                    {
+                        "interests": [{"id":6003020834693,"name":"Music"}],
+                        "life_events": [{"id":6002714398172,"name":"Newlywed (1 year)"}]
+                    },
+                    {},
+                    {}
+                ],
+                "geo_locations": {"countries":["TH"]}
+            }
+
             payload = {
                 'ad_account_id': ad_account_id,
                 'access_token': fb_access_token,
