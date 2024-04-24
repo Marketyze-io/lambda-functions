@@ -62,7 +62,7 @@ def lambda_handler(event, context):
     print("Data retrieved from Google Sheets")
     print(data)
 
-    # Create the batch request for rows without an adset ID
+    # Create the adsets for rows without an adset ID
     for row in data:
         if row[1] == "":
             adset_name = row[0]
