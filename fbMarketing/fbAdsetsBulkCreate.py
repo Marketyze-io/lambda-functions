@@ -46,7 +46,7 @@ def lambda_handler(event, context):
 
     # Send an ack to Slack
     print("Sending ack to Slack")
-    slack_post_message(channel_id, token, 'Starting bulk adset creation! :rocket:')
+    slack_post_message(channel_id, token, ':rocket: Starting bulk adset creation! :rocket:')
     print("Ack sent to Slack")
 
     # Get the data from Google Sheets
@@ -133,7 +133,7 @@ def lambda_handler(event, context):
 
             if 'error' in response_data:
                 print(f"Error creating adset: {response_data['error']['error_user_msg']}")
-                slack_post_message(channel_id, token, f"Whoops! There's been a problem with creating an adset!:warning:\n\nAdset Name: {adset_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent adsets will not be created. Please check the data in Google Sheets and try again.")
+                slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating an adset! :warning:\n\nAdset Name: {adset_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent adsets will not be created. Please check the data in Google Sheets and try again.")
                 error_flag = True
                 break
 
@@ -157,7 +157,7 @@ def lambda_handler(event, context):
 
     # Send a summary of the results to the user in Slack
     print("Sending summary to Slack")
-    slack_post_message(channel_id, token, f'{adsets_created} adsets created successfully! :tada:')
+    slack_post_message(channel_id, token, f':tada: {adsets_created} adsets created successfully! :tada:')
     if error_flag:
         slack_post_message(channel_id, token, "But there was an error with one of the adsets. Please check the data in Google Sheets and try again.")
     print("Summary sent to Slack")
