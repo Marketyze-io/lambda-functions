@@ -33,6 +33,7 @@ def lambda_handler(event, context):
         "valueInputOption": "USER_ENTERED",
         "data": []
     }
+    error_flag = False
     
     # Get the token from AWS Parameter Store
     secret_name = urlparse.quote(SECRET_NAME, safe="")
@@ -133,6 +134,7 @@ def lambda_handler(event, context):
             if 'error' in response_data:
                 print(f"Error creating adset: {response_data['error']['error_user_msg']}")
                 slack_post_message(channel_id, token, f"Whoops! There's been a problem with creating an adset!\n\nAdset Name: {adset_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent adsets will not be created. Please check the data in Google Sheets and try again.")
+                error_flag = True
                 break
 
             adset_id = response_data['id']
@@ -156,6 +158,8 @@ def lambda_handler(event, context):
     # Send a summary of the results to the user in Slack
     print("Sending summary to Slack")
     slack_post_message(channel_id, token, f'{adsets_created} adsets created successfully!')
+    if error_flag:
+        slack_post_message(channel_id, token, "But there was an error with one of the adsets. Please check the data in Google Sheets and try again.")
     print("Summary sent to Slack")
 
     return {
