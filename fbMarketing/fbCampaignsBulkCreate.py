@@ -43,6 +43,8 @@ def lambda_handler(event, context):
         "valueInputOption": "USER_ENTERED",
         "data": []
     }
+
+    error_flag = False
     
     # Get the token from AWS Parameter Store
     token = get_aws_secret(SECRET_NAME)
@@ -98,6 +100,12 @@ def lambda_handler(event, context):
             response = requests.post(url, data=payload)
             response_data = response.json()
             print(f'Response_data: {response_data}')
+
+            if 'error' in response_data:
+                print(f"Error creating campaign: {response_data['error']['message']}")
+                slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating a campaign! :warning:\n\nCampaign Name: {campaign_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent campaigns will not be created. Please check the data in Google Sheets and try again.")
+                error_flag = True
+
             campaign_id = response_data['id']
             print(f"Created campaign with ID: {campaign_id}")
             campaignsCreated += 1
@@ -119,6 +127,8 @@ def lambda_handler(event, context):
     # Send a summary of the results to the user in Slack
     print("Sending summary to Slack")
     slack_post_message(channel_id, token, f':tada: {campaignsCreated} campaigns created successfully! :tada:')
+    if error_flag:
+        slack_post_message(channel_id, token, "But there was an error with one of the campaigns. Please check the data in Google Sheets and try again.")
     print("Summary sent to Slack")
 
     return {
