@@ -105,6 +105,7 @@ def lambda_handler(event, context):
                 print(f"Error creating campaign: {response_data['error']['message']}")
                 slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating a campaign! :warning:\n\nCampaign Name: {campaign_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent campaigns will not be created. Please check the data in Google Sheets and try again.")
                 error_flag = True
+                break
 
             campaign_id = response_data['id']
             print(f"Created campaign with ID: {campaign_id}")
