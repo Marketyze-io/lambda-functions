@@ -101,9 +101,16 @@ def lambda_handler(event, context):
             response_data = response.json()
             print(f'Response_data: {response_data}')
 
-            if 'error' in response_data:
-                print(f"Error creating campaign: {response_data['error']['message']}")
-                slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating a campaign! :warning:\n\nCampaign Name: {campaign_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent campaigns will not be created. Please check the data in Google Sheets and try again.")
+            if not 'id' in response_data:
+                if 'error' in response_data:
+                    print(f"Error creating campaign: {response_data['error']['message']}")
+                    slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating a campaign! :warning:\n\nCampaign Name: {campaign_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent campaigns will not be created. Please check the data in Google Sheets and try again.")
+                elif 'message' in response_data:
+                    print(f"Error creating campaign: {response_data['message']}")
+                    slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating a campaign! :warning:\n\nCampaign Name: {campaign_name}\nError: {response_data['message']}\n\nAll subsequent campaigns will not be created. Please check the data in Google Sheets and try again.")
+                else:
+                    print(f"Error creating campaign: {response_data}")
+                    slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating a campaign! :warning:\n\nCampaign Name: {campaign_name}\nError: {response_data}\n\nAll subsequent campaigns will not be created. Please check the data in Google Sheets and try again.")
                 error_flag = True
                 break
 
