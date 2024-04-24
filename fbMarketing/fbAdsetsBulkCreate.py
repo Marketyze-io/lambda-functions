@@ -113,7 +113,7 @@ def lambda_handler(event, context):
                 'bid_amount': bid_amount,
                 'billing_event': billing_event,
                 'daily_budget': daily_budget,
-                'targeting': targeting,
+                'targeting': json.dumps(targeting),
                 'status': status,
                 'start_time': start_time,
                 'end_time': end_time
