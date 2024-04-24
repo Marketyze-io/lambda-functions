@@ -50,7 +50,7 @@ def lambda_handler(event, context):
         'bid_amount'           : bid_amount,
         'billing_event'        : billing_event,
         'daily_budget'         : daily_budget,
-        'targeting'            : json.dumps(targeting),
+        'targeting'            : targeting,
         'status'               : status,
         'start_time'           : start_time,
         'end_time'             : end_time
@@ -59,6 +59,8 @@ def lambda_handler(event, context):
         del form_data['start_time']
     if end_time == "":
         del form_data['end_time']
+    if type(targeting) == dict:
+        form_data['targeting'] = json.dumps(targeting)
     
     print(f'form_data: {form_data}')
 
