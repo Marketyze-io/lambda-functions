@@ -81,34 +81,11 @@ def lambda_handler(event, context):
             bid_amount = row[6]
             billing_event = row[7]
             daily_budget = row[8]
-            targeting = row[10]
+            audience_name = row[9]
+            audience_id = row[10]
             status = row[11]
             start_time = row[14]
             end_time = row[15]
-
-            # temporary targeting as placeholder
-            targeting = {
-                "age_min": 21,
-                "targeting_automation": {
-                    "advantage_audience": 1
-                },
-                "flexible_spec": [
-                    {
-                        "behaviors": [{"id":6002714895372,"name":"All travelers"}],
-                        "interests": [
-                            {"id":6003107902433,"name":"Association football (Soccer)"},
-                            {"id":6003139266461,"name":"Movies"}
-                        ]
-                    },
-                    {
-                        "interests": [{"id":6003020834693,"name":"Music"}],
-                        "life_events": [{"id":6002714398172,"name":"Newlywed (1 year)"}]
-                    },
-                    {},
-                    {}
-                ],
-                "geo_locations": {"countries":["TH"]}
-            }
 
             payload = {
                 'ad_account_id': ad_account_id,
@@ -121,7 +98,7 @@ def lambda_handler(event, context):
                 'bid_amount': bid_amount,
                 'billing_event': billing_event,
                 'daily_budget': daily_budget,
-                'targeting': json.dumps(targeting),
+                'audience_id': audience_id,
                 'status': status,
                 'start_time': start_time,
                 'end_time': end_time
