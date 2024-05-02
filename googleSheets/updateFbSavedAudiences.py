@@ -1,5 +1,6 @@
 import json
 import requests
+import datetime
 
 def lambda_handler(event, context):
     event_params    = json.loads(event['body'])
@@ -37,6 +38,14 @@ def lambda_handler(event, context):
     print(response.status_code)
     print(response.text)
 
+    # Update the "Last updated: " cell with the current time in UTC+7
+    current_time = datetime.datetime.now() + datetime.timedelta(hours=7)
+    gs_update_payload = {
+        "values": [[f'Last updated: {current_time.strftime("%Y-%m-%d %H:%M:%S")} (UTC+7)']]
+    }
+    gs_update_endpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/saved-audiences!A1?valueInputOption=USER_ENTERED&access_token={gs_access_token}'
+    response = requests.put(gs_update_endpoint, data=json.dumps(gs_update_payload))
+    
     return {
         'statusCode': response.status_code
     }
