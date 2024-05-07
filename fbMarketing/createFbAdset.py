@@ -7,7 +7,7 @@ def lambda_handler(event, context):
 
     # Check if event body is in JSON form
     if event_body.startswith('{'):
-        event_params          = json.loads(event_body)
+        event_params       = json.loads(event_body)
         ad_account_id      = event_params['ad_account_id']
         access_token       = event_params['access_token']
         adset_name         = event_params['adset_name']
@@ -25,7 +25,7 @@ def lambda_handler(event, context):
 
     # If not, then it is in URL-encoded form
     else:
-        event_params          = urlparse.parse_qs(event_body)
+        event_params       = urlparse.parse_qs(event_body)
         ad_account_id      = event_params['ad_account_id'][0]
         access_token       = event_params['access_token'][0]
         adset_name         = event_params['adset_name'][0]
