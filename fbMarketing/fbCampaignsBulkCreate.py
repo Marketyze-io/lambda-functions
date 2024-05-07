@@ -10,7 +10,7 @@ aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
-GOOGLE_SHEETS_SHEET_NAME = 'campaign-details'
+GOOGLE_SHEETS_SHEET_NAME = '🤖Rob_FB_Campaigns'
 
 def slack_post_message(channel_id, token, message):
     slack_payload = {
