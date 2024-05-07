@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     spreadsheet_id  = event_params['spreadsheet_id']
 
     # Get the saved audiences from Facebook
-    saved_audiences_endpoint = f'https://graph.facebook.com/v19.0/{ad_account_id}/saved_audiences?limit=100&filtering=[{{"field": "name", "operator": "CONTAIN", "value": "Marketyze"}}]'
+    saved_audiences_endpoint = f'https://graph.facebook.com/v19.0/{ad_account_id}/saved_audiences?limit=100&fields=["name","id","targeting"]&filtering=[{{"field": "name", "operator": "CONTAIN", "value": "Marketyze"}}]'
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {fb_access_token}'
@@ -26,14 +26,14 @@ def lambda_handler(event, context):
         "values": [],
     }
     for audience in response.json()['data']:
-        gs_append_payload['values'].append([audience['name'], audience['id']])
+        gs_append_payload['values'].append([audience['name'], audience['id'], json.dumps(audience['targeting'])])
     
     # Clear the existing data in the sheet
     gs_clear_endpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/saved-audiences!A3:B:clear?access_token={gs_access_token}'
     response = requests.post(gs_clear_endpoint)
 
     # Append the new data
-    gs_append_endpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/saved-audiences!A3:append?valueInputOption=USER_ENTERED&access_token={gs_access_token}'
+    gs_append_endpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/saved-audiences!A3:append?valueInputOption=RAW&access_token={gs_access_token}'
     response = requests.post(gs_append_endpoint, data=json.dumps(gs_append_payload))
     print(response.status_code)
     print(response.text)
