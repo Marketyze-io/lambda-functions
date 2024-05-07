@@ -10,7 +10,7 @@ aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
-GOOGLE_SHEETS_SHEET_NAME = 'adset-details'
+GOOGLE_SHEETS_SHEET_NAME = '🤖Rob_FB_Adsets'
 
 def slack_post_message(channel_id, token, message):
     slack_payload = {
@@ -87,6 +87,7 @@ def lambda_handler(event, context):
             end_time = row[15]
 
             # temporary targeting as placeholder
+            """
             targeting = {
                 "age_min": 21,
                 "targeting_automation": {
@@ -109,6 +110,7 @@ def lambda_handler(event, context):
                 ],
                 "geo_locations": {"countries":["TH"]}
             }
+            """
 
             payload = {
                 'ad_account_id': ad_account_id,
