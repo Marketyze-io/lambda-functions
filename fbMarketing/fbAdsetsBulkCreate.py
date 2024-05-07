@@ -137,7 +137,7 @@ def lambda_handler(event, context):
 
             if not 'id' in response_data:
                 if 'error' in response_data:
-                    print(f"Error creating adset: {response_data['error']['error_user_msg']}")
+                    print(f"Error creating adset: {response_data['error']}")
                     slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating an adset! :warning:\n\nAdset Name: {adset_name}\nError: {response_data['error']['error_user_msg']}\n\nAll subsequent adsets will not be created. Please check the data in Google Sheets and try again.")
                 elif 'message' in response_data:
                     print(f"Error creating adset: {response_data['message']}")

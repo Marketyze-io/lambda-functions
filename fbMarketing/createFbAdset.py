@@ -59,8 +59,6 @@ def lambda_handler(event, context):
         del form_data['start_time']
     if end_time == "":
         del form_data['end_time']
-    if type(targeting) == dict:
-        form_data['targeting'] = json.dumps(targeting)
     
     print(f'form_data: {form_data}')
 
