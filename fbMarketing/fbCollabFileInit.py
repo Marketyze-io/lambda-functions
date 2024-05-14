@@ -20,7 +20,7 @@ MEDIA_SHEET_NAME       = '🤖Rob_FB_Media'
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
-def postMessage(channel_id, token, message):
+def slack_post_message(channel_id, token, message):
     slack_payload = {
         'channel': channel_id,
         'text': message
@@ -61,7 +61,7 @@ def lambda_handler(event, context):
             # Check for errors during sheet creation
             if gs_response.status_code != 200:
                 print(gs_response.json())
-                postMessage(channel_id, token, f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:')
+                slack_post_message(channel_id, token, f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:')
                 print("Error msg sent to Slack")
                 return {
                     'statusCode': 500,
@@ -90,7 +90,7 @@ def lambda_handler(event, context):
     gs_response = requests.get(gs_name_endpoint)
     spreadsheet_name = gs_response.json()['properties']['title']
     
-    postMessage(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:")
+    slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:")
 
     return {
         'statusCode': 200
