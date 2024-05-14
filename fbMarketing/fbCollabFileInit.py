@@ -113,6 +113,9 @@ def lambda_handler(event, context):
         "ad_account_id"  : ad_account_id
     }
     response = requests.post(UPDATE_SAVED_AUDIENCES_ENDPOINT, json=payload)
+    if response.status_code != 200:
+        slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the saved audiences. Please try it manually later. :disappointed:')
+        print("Error msg sent to Slack")
 
     slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:
                        \nFeel free to start working on the spreadsheet again :smile:")
