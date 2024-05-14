@@ -82,6 +82,5 @@ def lambda_handler(event, context):
             gs_response = requests.post(gs_rename_endpoint, json=payload)
 
     return {
-        'statusCode': 200,
-        'body': json.dumps('Sheet initialised successfully')
+        'statusCode': 200
     }
