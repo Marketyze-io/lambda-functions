@@ -9,14 +9,23 @@ SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 
 TEMPLATE_SPREADSHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
-TEMPLATE_SHEET_ID = "987478379"
 
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
-CAMPAIGNS_SHEET_NAME   = '🤖Rob_FB_Campaigns'
-ADSETS_SHEET_NAME      = '🤖Rob_FB_Adsets'
-ADCOPIES_SHEET_NAME    = '🤖Rob_FB_Adcopies'
-AUDIENCES_SHEET_NAME   = '🤖Rob_FB_Audiences'
-MEDIA_SHEET_NAME       = '🤖Rob_FB_Media'
+CAMPAIGNS_SHEET = {
+    'name': '🤖Rob_FB_Campaigns',
+    'id'  : '987478379'}
+ADSETS_SHEET = {
+    'name': '🤖Rob_FB_Adsets',
+    'id': '655550453'}
+ADCOPIES_SHEET = {
+    'name': '🤖Rob_FB_Adcopies',
+    'id': '224614968'}
+AUDIENCES_SHEET = {
+    'name': '🤖Rob_FB_Audiences',
+    'id': '862287605'}
+MEDIA_SHEET = {
+    'name': '🤖Rob_FB_Media',
+    'id': '1547157615'}
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
@@ -44,19 +53,27 @@ def lambda_handler(event, context):
     token = json.loads(token)
     print("Slack token retrieved")
 
+    # Get spreadsheet name
+    gs_name_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
+    gs_response = requests.get(gs_name_endpoint)
+    spreadsheet_name = gs_response.json()['properties']['title']
+
+    slack_post_message(channel_id, token, f':robot_face: I\'m now initialising {spreadsheet_name} :robot_face:
+                       \nPlease don\'t do anything to the spreadsheet\nThis will take a few seconds...')
+
     # Check if each worksheet already exists
-    worksheet_names = [CAMPAIGNS_SHEET_NAME, ADSETS_SHEET_NAME, ADCOPIES_SHEET_NAME, AUDIENCES_SHEET_NAME, MEDIA_SHEET_NAME]
-    for name in worksheet_names:
-        gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{name}?access_token={gs_access_token}"
+    worksheet_names = [CAMPAIGNS_SHEET, ADSETS_SHEET, ADCOPIES_SHEET, AUDIENCES_SHEET, MEDIA_SHEET]
+    for sheet in worksheet_names:
+        gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{sheet['name']}?access_token={gs_access_token}"
         gs_response = requests.get(gs_endpoint)
         if gs_response.status_code == 200:
-            print(f"{name} sheet already exists")
+            print(f"{sheet} sheet already exists")
         else:
             # Create the worksheet sheet
             payload = {
                 "destinationSpreadsheetId": spreadsheet_id,
             }
-            gs_copy_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + TEMPLATE_SPREADSHEET_ID}/sheets/{TEMPLATE_SHEET_ID}:copyTo?access_token={gs_access_token}"
+            gs_copy_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + TEMPLATE_SPREADSHEET_ID}/sheets/{sheet['id']}:copyTo?access_token={gs_access_token}"
             gs_response = requests.post(gs_copy_endpoint, json=payload)
             # Check for errors during sheet creation
             if gs_response.status_code != 200:
@@ -75,7 +92,7 @@ def lambda_handler(event, context):
                         "updateSheetProperties": {
                             "properties": {
                                 "sheetId": sheet_id,
-                                "title": name
+                                "title": sheet['name']
                             },
                             "fields": "title"
                         }
@@ -84,13 +101,9 @@ def lambda_handler(event, context):
             }
             gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
             gs_response = requests.post(gs_rename_endpoint, json=payload)
-    
-    # Get spreadsheet name
-    gs_name_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
-    gs_response = requests.get(gs_name_endpoint)
-    spreadsheet_name = gs_response.json()['properties']['title']
-    
-    slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:")
+
+    slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:
+                       \nFeel free to start working on the spreadsheet again :smile:")
 
     return {
         'statusCode': 200
