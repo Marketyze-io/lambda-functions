@@ -18,6 +18,18 @@ ADCOPIES_SHEET_NAME    = '🤖Rob_FB_Adcopies'
 AUDIENCES_SHEET_NAME   = '🤖Rob_FB_Audiences'
 MEDIA_SHEET_NAME       = '🤖Rob_FB_Media'
 
+SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
+
+def postMessage(channel_id, token, message):
+    slack_payload = {
+        'channel': channel_id,
+        'text': message
+    }
+    slack_request = requests.post(SLACK_POST_MESSAGE_ENDPOINT, headers
+        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
+    print(slack_request.json())
+
+
 def lambda_handler(event, context):
     channel_id      = event['channel_id']
     gs_access_token = event['gs_access_token']
@@ -35,7 +47,7 @@ def lambda_handler(event, context):
     # Check if each worksheet already exists
     worksheet_names = [CAMPAIGNS_SHEET_NAME, ADSETS_SHEET_NAME, ADCOPIES_SHEET_NAME, AUDIENCES_SHEET_NAME, MEDIA_SHEET_NAME]
     for name in worksheet_names:
-        gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + name}/values/campaign-details?access_token={gs_access_token}"
+        gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{name}?access_token={gs_access_token}"
         gs_response = requests.get(gs_endpoint)
         if gs_response.status_code == 200:
             print(f"{name} sheet already exists")
@@ -49,15 +61,7 @@ def lambda_handler(event, context):
             # Check for errors during sheet creation
             if gs_response.status_code != 200:
                 print(gs_response.json())
-                # Send a message to Slack
-                slack_endpoint = 'https://slack.com/api/chat.postMessage'
-                slack_payload = {
-                    'channel': channel_id,
-                    'text': f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:'
-                }
-                slack_request = requests.post(slack_endpoint, headers
-                    ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
-                print(slack_request.json())
+                postMessage(channel_id, token, f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:')
                 print("Error msg sent to Slack")
                 return {
                     'statusCode': 500,
@@ -80,6 +84,13 @@ def lambda_handler(event, context):
             }
             gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
             gs_response = requests.post(gs_rename_endpoint, json=payload)
+    
+    # Get spreadsheet name
+    gs_name_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
+    gs_response = requests.get(gs_name_endpoint)
+    spreadsheet_name = gs_response.json()['properties']['title']
+    
+    postMessage(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:")
 
     return {
         'statusCode': 200
