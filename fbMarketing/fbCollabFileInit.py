@@ -3,13 +3,15 @@ import os
 import urllib.parse as urlparse
 import urllib.request
 import requests
+import datetime
 
 AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/"
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 UPDATE_SAVED_AUDIENCES_ENDPOINT = "https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/audiences/update"
 
-TEMPLATE_SPREADSHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
+MASTER_SHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
+MASTER_WORSKSHEET_NAME = "spreadsheet-master-list"
 
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 CAMPAIGNS_SHEET = {
@@ -46,6 +48,7 @@ def lambda_handler(event, context):
     spreadsheet_id  = event['spreadsheet_id']
     fb_access_token = event['fb_access_token']
     ad_account_id   = event['ad_account_id']
+    ad_account_name = event['ad_account_name']
 
     # Get the token from AWS Parameter Store
     secret_name = urlparse.quote(SECRET_NAME, safe="")
@@ -75,7 +78,7 @@ def lambda_handler(event, context):
             payload = {
                 "destinationSpreadsheetId": spreadsheet_id,
             }
-            gs_copy_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + TEMPLATE_SPREADSHEET_ID}/sheets/{sheet['id']}:copyTo?access_token={gs_access_token}"
+            gs_copy_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + MASTER_SHEET_ID}/sheets/{sheet['id']}:copyTo?access_token={gs_access_token}"
             gs_response = requests.post(gs_copy_endpoint, json=payload)
             # Check for errors during sheet creation
             if gs_response.status_code != 200:
@@ -116,7 +119,27 @@ def lambda_handler(event, context):
         slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the saved audiences. Please try it manually later. :disappointed:')
         print("Error msg sent to Slack")
 
-    slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:\nFeel free to start working on the spreadsheet again :smile:")
+    # Add spreadsheet id to the master-list
+    gs_append_endpoint = GOOGLE_SHEETS_ROOT_URL + MASTER_SHEET_ID + f"/values/'{MASTER_WORSKSHEET_NAME}'!A3:append?access_token={gs_access_token}&valueInputOption=USER_ENTERED"
+    datetime_now = datetime.datetime.now() + datetime.timedelta(hours=7)
+    gs_append_body = {
+        "range": "'spreadsheet-master-list'!A3",
+        "majorDimension": "ROWS",
+        "values": [[
+          ad_account_name,
+          ad_account_id,
+          spreadsheet_id,
+          datetime_now,
+        ]],
+      };
+    gs_append_response = requests.post(gs_append_endpoint, json=gs_append_body)
+
+      # Handle the error if the gs_append endpoint was not called successfully
+    if gs_append_response.status_code != 200:
+        slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the master list. Please contact one of the app maintainers. :disappointed:')
+        print("Error msg sent to Slack")
+    else:
+        slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:\nFeel free to start working on the spreadsheet again :smile:")
 
     return {
         'statusCode': 200

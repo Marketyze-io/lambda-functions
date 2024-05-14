@@ -31,7 +31,7 @@ def lambda_handler(event, context):
         gs_append_payload['values'].append([audience['name'], audience['id'], json.dumps(audience['targeting'])])
     
     # Clear the existing data in the sheet
-    gs_clear_endpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{AUDIENCE_SHEET_NAME}!A3:B:clear?access_token={gs_access_token}'
+    gs_clear_endpoint = f'https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/{AUDIENCE_SHEET_NAME}!A3:C:clear?access_token={gs_access_token}'
     response = requests.post(gs_clear_endpoint)
 
     # Append the new data
