@@ -129,7 +129,7 @@ def lambda_handler(event, context):
           ad_account_name,
           ad_account_id,
           spreadsheet_id,
-          datetime_now,
+          datetime_now.strftime("%Y-%m-%d %H:%M:%S"),
         ]],
       };
     gs_append_response = requests.post(gs_append_endpoint, json=gs_append_body)
