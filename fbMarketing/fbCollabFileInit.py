@@ -7,6 +7,7 @@ import requests
 AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/"
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
+UPDATE_SAVED_AUDIENCES_ENDPOINT = "https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/audiences/update"
 
 TEMPLATE_SPREADSHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
 
@@ -43,6 +44,8 @@ def lambda_handler(event, context):
     channel_id      = event['channel_id']
     gs_access_token = event['gs_access_token']
     spreadsheet_id  = event['spreadsheet_id']
+    fb_access_token = event['fb_access_token']
+    ad_account_id   = event['ad_account_id']
 
     # Get the token from AWS Parameter Store
     secret_name = urlparse.quote(SECRET_NAME, safe="")
@@ -101,6 +104,15 @@ def lambda_handler(event, context):
             }
             gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
             gs_response = requests.post(gs_rename_endpoint, json=payload)
+
+    # Update the saved audiences sheet
+    payload = {
+        "spreadsheet_id" : spreadsheet_id,
+        "gs_access_token": gs_access_token,
+        "fb_access_token": fb_access_token,
+        "ad_account_id"  : ad_account_id
+    }
+    response = requests.post(UPDATE_SAVED_AUDIENCES_ENDPOINT, json=payload)
 
     slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:
                        \nFeel free to start working on the spreadsheet again :smile:")
