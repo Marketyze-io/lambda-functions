@@ -11,6 +11,13 @@ aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 TEMPLATE_SPREADSHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
 TEMPLATE_SHEET_ID = "987478379"
 
+GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
+CAMPAIGNS_SHEET_NAME   = '🤖Rob_FB_Campaigns'
+ADSETS_SHEET_NAME      = '🤖Rob_FB_Adsets'
+ADCOPIES_SHEET_NAME    = '🤖Rob_FB_Adcopies'
+AUDIENCES_SHEET_NAME   = '🤖Rob_FB_Audiences'
+MEDIA_SHEET_NAME       = '🤖Rob_FB_Media'
+
 def lambda_handler(event, context):
     channel_id      = event['channel_id']
     gs_access_token = event['gs_access_token']
@@ -25,78 +32,56 @@ def lambda_handler(event, context):
     token = json.loads(token)
     print("Slack token retrieved")
 
-    # Check if a campaign-details sheet already exists
-    gs_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}/values/campaign-details?access_token={gs_access_token}"
-    gs_response = requests.get(gs_endpoint)
-    if gs_response.status_code == 200:
-        return {
-            'statusCode': 200,
-            'body': json.dumps('Sheet already exists')
-        }
-    else:
-        # Send a message to Slack
-        slack_endpoint = 'https://slack.com/api/chat.postMessage'
-        slack_payload = {
-            'channel': channel_id,
-            'text': f'Looks like the target spreadsheet doesn\'t have a Campaign Details sheet yet. I\'ll fix that for you! :wink:'
-        }
-        slack_request = requests.post(slack_endpoint, headers
-            ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
-        print(slack_request.json())
-        print("Ack sent to Slack")
-    
-    # Create the campaign-details sheet
-    payload = {
-        "destinationSpreadsheetId": spreadsheet_id,
-    }
-    gs_copy_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{TEMPLATE_SPREADSHEET_ID}/sheets/{TEMPLATE_SHEET_ID}:copyTo?access_token={gs_access_token}"
-    gs_response = requests.post(gs_copy_endpoint, json=payload)
-    if gs_response.status_code != 200:
-        print(gs_response.json())
-        # Send a message to Slack
-        slack_endpoint = 'https://slack.com/api/chat.postMessage'
-        slack_payload = {
-            'channel': channel_id,
-            'text': f'Whoops! I couldn\'t create the Campaign Details sheet. Please try again later :disappointed:'
-        }
-        slack_request = requests.post(slack_endpoint, headers
-            ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
-        print(slack_request.json())
-        print("Error msg sent to Slack")
-        return {
-            'statusCode': 500,
-            'body': json.dumps('Error creating sheet')
-        }
-    
-    # Rename the sheet
-    sheet_id = gs_response.json()['sheetId']
-    payload = {
-        "requests": [
-            {
-                "updateSheetProperties": {
-                    "properties": {
-                        "sheetId": sheet_id,
-                        "title": "campaign-details"
-                    },
-                    "fields": "title"
-                }
+    # Check if each worksheet already exists
+    worksheet_names = [CAMPAIGNS_SHEET_NAME, ADSETS_SHEET_NAME, ADCOPIES_SHEET_NAME, AUDIENCES_SHEET_NAME, MEDIA_SHEET_NAME]
+    for name in worksheet_names:
+        gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + name}/values/campaign-details?access_token={gs_access_token}"
+        gs_response = requests.get(gs_endpoint)
+        if gs_response.status_code == 200:
+            print(f"{name} sheet already exists")
+        else:
+            # Create the worksheet sheet
+            payload = {
+                "destinationSpreadsheetId": spreadsheet_id,
             }
-        ]
-    }
-    gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
-    gs_response = requests.post(gs_rename_endpoint, json=payload)
+            gs_copy_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + TEMPLATE_SPREADSHEET_ID}/sheets/{TEMPLATE_SHEET_ID}:copyTo?access_token={gs_access_token}"
+            gs_response = requests.post(gs_copy_endpoint, json=payload)
+            # Check for errors during sheet creation
+            if gs_response.status_code != 200:
+                print(gs_response.json())
+                # Send a message to Slack
+                slack_endpoint = 'https://slack.com/api/chat.postMessage'
+                slack_payload = {
+                    'channel': channel_id,
+                    'text': f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:'
+                }
+                slack_request = requests.post(slack_endpoint, headers
+                    ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
+                print(slack_request.json())
+                print("Error msg sent to Slack")
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps('Error creating sheet')
+                }
+            # Rename the sheet
+            sheet_id = gs_response.json()['sheetId']
+            payload = {
+                "requests": [
+                    {
+                        "updateSheetProperties": {
+                            "properties": {
+                                "sheetId": sheet_id,
+                                "title": name
+                            },
+                            "fields": "title"
+                        }
+                    }
+                ]
+            }
+            gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
+            gs_response = requests.post(gs_rename_endpoint, json=payload)
 
-    # Send a message to Slack
-    slack_endpoint = 'https://slack.com/api/chat.postMessage'
-    slack_payload = {
-        'channel': channel_id,
-        'text': f'Campaign Details sheet created successfully! :tada:'
-    }
-    slack_request = requests.post(slack_endpoint, headers
-        ={'Authorization': f'Bearer {token['Parameter']['Value']}'}, data=slack_payload)
-    print(slack_request.json())
-    print("Success msg sent to Slack")
     return {
         'statusCode': 200,
-        'body': json.dumps('Sheet created successfully')
+        'body': json.dumps('Sheet initialised successfully')
     }
