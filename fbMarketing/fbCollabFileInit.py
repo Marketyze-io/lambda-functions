@@ -61,8 +61,7 @@ def lambda_handler(event, context):
     gs_response = requests.get(gs_name_endpoint)
     spreadsheet_name = gs_response.json()['properties']['title']
 
-    slack_post_message(channel_id, token, f':robot_face: I\'m now initialising {spreadsheet_name} :robot_face:
-                       \nPlease don\'t do anything to the spreadsheet\nThis will take a few seconds...')
+    slack_post_message(channel_id, token, f':robot_face: I\'m now initialising {spreadsheet_name} :robot_face:\nPlease don\'t do anything to the spreadsheet\nThis will take a few seconds...')
 
     # Check if each worksheet already exists
     worksheet_names = [CAMPAIGNS_SHEET, ADSETS_SHEET, ADCOPIES_SHEET, AUDIENCES_SHEET, MEDIA_SHEET]
@@ -117,8 +116,7 @@ def lambda_handler(event, context):
         slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the saved audiences. Please try it manually later. :disappointed:')
         print("Error msg sent to Slack")
 
-    slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:
-                       \nFeel free to start working on the spreadsheet again :smile:")
+    slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:\nFeel free to start working on the spreadsheet again :smile:")
 
     return {
         'statusCode': 200
