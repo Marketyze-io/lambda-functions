@@ -21,7 +21,7 @@ def lambda_handler(event, context):
 
     # Append the saved audiences to Google Sheets
     gs_append_payload = {
-        "range": "saved-audiences!A3",
+        "range": "🤖Rob_FB_Audiences!A3",
         "majorDimension": "ROWS",
         "values": [],
     }
