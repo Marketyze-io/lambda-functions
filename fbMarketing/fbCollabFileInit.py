@@ -74,7 +74,7 @@ def lambda_handler(event, context):
         sheet_name = sheet['properties']['title']
         sheet_id = sheet['properties']['sheetId']
         if sheet_name in master_sheet_ids:
-            print(f"{sheet['name']} sheet already exists")
+            print(f"{sheet_name} sheet already exists")
             new_sheet_ids[sheet_name] = sheet_id
             del master_sheet_ids[sheet_name]
         
@@ -115,7 +115,7 @@ def lambda_handler(event, context):
         gs_response = requests.post(gs_rename_endpoint, json=payload)
         new_sheet_ids[sheet_name] = sheet_id
 
-    print("new_sheet_ids: " + new_sheet_ids)
+    print(new_sheet_ids)
 
     # Get the formula for the targeting spec in the adset sheet
     payload = {
