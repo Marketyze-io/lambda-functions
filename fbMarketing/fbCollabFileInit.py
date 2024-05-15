@@ -14,21 +14,12 @@ MASTER_SHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
 MASTER_WORSKSHEET_NAME = "spreadsheet-master-list"
 
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
-CAMPAIGNS_SHEET = {
-    'name': '🤖Rob_FB_Campaigns',
-    'id'  : '987478379'}
-ADSETS_SHEET = {
-    'name': '🤖Rob_FB_Adsets',
-    'id': '655550453'}
-ADCOPIES_SHEET = {
-    'name': '🤖Rob_FB_Adcopies',
-    'id': '224614968'}
-AUDIENCES_SHEET = {
-    'name': '🤖Rob_FB_Audiences',
-    'id': '862287605'}
-MEDIA_SHEET = {
-    'name': '🤖Rob_FB_Media',
-    'id': '1547157615'}
+CAMPAIGNS_SHEET = {'name': '🤖Rob_FB_Campaigns', 'id': '987478379'}
+ADSETS_SHEET = {'name': '🤖Rob_FB_Adsets', 'id': '655550453'}
+ADCOPIES_SHEET = {'name': '🤖Rob_FB_Adcopies', 'id': '224614968'}
+AUDIENCES_SHEET = {'name': '🤖Rob_FB_Audiences', 'id': '862287605'}
+MEDIA_SHEET = {'name': '🤖Rob_FB_Media', 'id': '1547157615'}
+
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
@@ -67,45 +58,126 @@ def lambda_handler(event, context):
     slack_post_message(channel_id, token, f':robot_face: I\'m now initialising {spreadsheet_name} :robot_face:\nPlease don\'t do anything to the spreadsheet\nThis will take a few seconds...')
 
     # Check if each worksheet already exists
-    worksheet_names = [CAMPAIGNS_SHEET, ADSETS_SHEET, ADCOPIES_SHEET, AUDIENCES_SHEET, MEDIA_SHEET]
-    for sheet in worksheet_names:
-        gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{sheet['name']}?access_token={gs_access_token}"
-        gs_response = requests.get(gs_endpoint)
-        if gs_response.status_code == 200:
-            print(f"{sheet} sheet already exists")
-        else:
-            # Create the worksheet sheet
-            payload = {
-                "destinationSpreadsheetId": spreadsheet_id,
+    new_sheet_ids = {}
+    master_sheet_ids = {
+        CAMPAIGNS_SHEET['name']: CAMPAIGNS_SHEET['id'],
+        ADSETS_SHEET['name']: ADSETS_SHEET['id'],
+        ADCOPIES_SHEET['name']: ADCOPIES_SHEET['id'],
+        AUDIENCES_SHEET['name']: AUDIENCES_SHEET['id'],
+        MEDIA_SHEET['name']: MEDIA_SHEET['id']
+    }
+    gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
+    gs_response = requests.get(gs_endpoint)
+    gs_sheets = gs_response.json()['sheets']
+    # Check if the sheet already exists, then remove it from the master list
+    for sheet in gs_sheets:
+        sheet_name = sheet['properties']['title']
+        sheet_id = sheet['properties']['sheetId']
+        if sheet_name in master_sheet_ids:
+            print(f"{sheet['name']} sheet already exists")
+            new_sheet_ids[sheet_name] = sheet_id
+            del master_sheet_ids[sheet_name]
+        
+    # Create the worksheets that don't exist
+    for sheet_name in master_sheet_ids:
+        sheet_id = master_sheet_ids[sheet_name]
+        # Create the worksheet
+        payload = {
+            "destinationSpreadsheetId": spreadsheet_id,
+        }
+        gs_copy_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + MASTER_SHEET_ID}/sheets/{sheet_id}:copyTo?access_token={gs_access_token}"
+        gs_response = requests.post(gs_copy_endpoint, json=payload)
+        # Check for errors during sheet creation
+        if gs_response.status_code != 200:
+            print(gs_response.json())
+            slack_post_message(channel_id, token, f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:')
+            print("Error msg sent to Slack")
+            return {
+                'statusCode': 500,
+                'body': json.dumps('Error creating sheet')
             }
-            gs_copy_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + MASTER_SHEET_ID}/sheets/{sheet['id']}:copyTo?access_token={gs_access_token}"
-            gs_response = requests.post(gs_copy_endpoint, json=payload)
-            # Check for errors during sheet creation
-            if gs_response.status_code != 200:
-                print(gs_response.json())
-                slack_post_message(channel_id, token, f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:')
-                print("Error msg sent to Slack")
-                return {
-                    'statusCode': 500,
-                    'body': json.dumps('Error creating sheet')
-                }
-            # Rename the sheet
-            sheet_id = gs_response.json()['sheetId']
-            payload = {
-                "requests": [
-                    {
-                        "updateSheetProperties": {
-                            "properties": {
-                                "sheetId": sheet_id,
-                                "title": sheet['name']
-                            },
-                            "fields": "title"
-                        }
+        # Rename the sheet
+        new_sheet_id = gs_response.json()['sheetId']
+        payload = {
+            "requests": [
+                {
+                    "updateSheetProperties": {
+                        "properties": {
+                            "sheetId": new_sheet_id,
+                            "title": sheet_name
+                        },
+                        "fields": "title"
                     }
-                ]
+                }
+            ]
+        }
+        gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
+        gs_response = requests.post(gs_rename_endpoint, json=payload)
+        new_sheet_ids[sheet_name] = sheet_id
+
+    print("new_sheet_ids: " + new_sheet_ids)
+
+    # Get the formula for the targeting spec in the adset sheet
+    payload = {
+        "valueRenderOption": "FORMULA"
+    }
+    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADSETS_SHEET['name']}!K3?access_token={gs_access_token}"
+    gs_response = requests.get(gs_formulas_endpoint)
+    targeting_spec_formula = gs_response.json()['values'][0][0]
+
+    # Fix the broken references in the adset sheet
+    payload = {
+        "requests": [
+            # Clear existing data validation rules in the Audience columm
+            {
+                "setDataValidation": {}
+            },
+            # Recreate the data validation rules in the Audience column
+            {
+                "setDataValidation": {
+                    "range": {
+                        "sheetId": new_sheet_ids[ADSETS_SHEET['name']],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 9,
+                        "endColumnIndex": 10
+                    },
+                    "rule": {
+                        "condition": {
+                            "type": "ONE_OF_RANGE",
+                            "values": [
+                                {
+                                    "userEnteredValue": f"'{AUDIENCES_SHEET['name']}'!$A$3:$A"
+                                }
+                            ]
+                        },
+                        "inputMessage": "Please select an audience from the dropdown list",
+                        "strict": True
+                    }
+                }
+            },
+            # Overwrite the targeting spec formulas in the adset sheet
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": new_sheet_ids['🤖Rob_FB_Adsets'],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 10,
+                        "endColumnIndex": 11
+                    },
+                    "cell": {
+                        "userEnteredValue": {
+                            "formulaValue": targeting_spec_formula
+                        }
+                    },
+                    "fields": "*"
+                }
             }
-            gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
-            gs_response = requests.post(gs_rename_endpoint, json=payload)
+        ]
+    }
+    gs_fix_references_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
+    gs_response = requests.post(gs_fix_references_endpoint, json=payload)
 
     # Update the saved audiences sheet
     payload = {
