@@ -47,7 +47,10 @@ def lambda_handler(event, context):
     # Get the column of google drive media links
     media_links_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!A3:B?majorDimension=COLUMNS&access_token={gs_access_token}"
     gs_response = requests.get(media_links_endpoint)
+    print(gs_response.json())
     media_links = gs_response.json()['values'][0]
+
+    print(media_links)
 
     # Upload each piece of media to Facebook
     for link in media_links:
@@ -56,13 +59,16 @@ def lambda_handler(event, context):
 
         # Check if there is already a media hash
         if media_hash:
+            print(f"Media hash already exists for {media_link}")
             continue
 
         # Extract the file id from the URL
         file_id = media_link.split('/')[-2]
+        print(f"Uploading media for {file_id}")
 
         # Get the row index of the media link
         media_row_index = media_links.index(media_link) + 3
+        print(f"Media row index: {media_row_index}")
 
         # Get the file metadata
         gd_metadata_endpoint = f"{GOOGLE_DRIVE_ROOT_URL}files/{file_id}?fields=name,thumbnailLink&access_token={gs_access_token}"
@@ -70,11 +76,14 @@ def lambda_handler(event, context):
         gd_metadata = gd_metadata_response.json()
         file_name = gd_metadata['name']
         thumbnail_link = gd_metadata['thumbnailLink']
+        print(f"File name: {file_name}")
+        print(f"Thumbnail link: {thumbnail_link}")
 
         # Get the file
         gd_file_endpoint = f"{GOOGLE_DRIVE_ROOT_URL}files/{file_id}?alt=media&access_token={gs_access_token}"
         gd_file_response = requests.get(gd_file_endpoint)
         gd_file = gd_file_response.content
+        print(f"File retrieved")
 
         # Upload the file to Facebook
         fb_media_payload = {
@@ -84,7 +93,9 @@ def lambda_handler(event, context):
         fb_ad_media_endpoint = f"{FACEBOOK_ROOT_ENDPOINT}{ad_account_id}/adimages"
         fb_media_request = requests.post(fb_ad_media_endpoint, files=fb_media_payload)
         fb_media_response = fb_media_request.json()
+        print(fb_media_response)
         media_hash = fb_media_response['images'][file_name]['hash']
+        print(f"Media hash: {media_hash}")
 
         # Update the spreadsheet with the media thumbnail, name and hash
         media_thumbnail = f'=IMAGE("{thumbnail_link}")'
