@@ -117,20 +117,27 @@ def lambda_handler(event, context):
 
     print(new_sheet_ids)
 
-    # Get the formula for the targeting spec in the adset sheet
-    payload = {
-        "valueRenderOption": "FORMULA"
-    }
-    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADSETS_SHEET['name']}!K3?access_token={gs_access_token}"
+    # Get the formula for the targeting spec in the adset sheet    }
+    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADSETS_SHEET['name']}!K3?valueRenderOption=FORMULA&access_token={gs_access_token}"
     gs_response = requests.get(gs_formulas_endpoint)
     targeting_spec_formula = gs_response.json()['values'][0][0]
+    
+    print(targeting_spec_formula)
 
     # Fix the broken references in the adset sheet
     payload = {
         "requests": [
             # Clear existing data validation rules in the Audience columm
             {
-                "setDataValidation": {}
+                "setDataValidation": {
+                    "range": {
+                        "sheetId": new_sheet_ids[ADSETS_SHEET['name']],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 9,
+                        "endColumnIndex": 10
+                    }
+                }
             },
             # Recreate the data validation rules in the Audience column
             {
@@ -147,12 +154,13 @@ def lambda_handler(event, context):
                             "type": "ONE_OF_RANGE",
                             "values": [
                                 {
-                                    "userEnteredValue": f"'{AUDIENCES_SHEET['name']}'!$A$3:$A"
+                                    "userEnteredValue": f"='{AUDIENCES_SHEET['name']}'!$A$3:$A"
                                 }
                             ]
                         },
                         "inputMessage": "Please select an audience from the dropdown list",
-                        "strict": True
+                        "strict": True,
+                        "showCustomUi": True
                     }
                 }
             },
@@ -178,6 +186,7 @@ def lambda_handler(event, context):
     }
     gs_fix_references_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
     gs_response = requests.post(gs_fix_references_endpoint, json=payload)
+    print(gs_response.json())
 
     # Update the saved audiences sheet
     payload = {
