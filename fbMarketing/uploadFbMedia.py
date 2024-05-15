@@ -45,7 +45,7 @@ def lambda_handler(event, context):
     print("Slack token retrieved")
 
     # Get the column of google drive media links
-    media_links_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!A3:B?majorDimension=COLUMNS&access_token={gs_access_token}"
+    media_links_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!A3:B?access_token={gs_access_token}"
     gs_response = requests.get(media_links_endpoint)
     print(gs_response.json())
     media_links = gs_response.json()['values'][0]
