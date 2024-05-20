@@ -117,17 +117,24 @@ def lambda_handler(event, context):
 
     print(new_sheet_ids)
 
-    # Get the formula for the targeting spec in the adset sheet    }
+    # Get the formula for the targeting spec in the adset sheet
     gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADSETS_SHEET['name']}!K3?valueRenderOption=FORMULA&access_token={gs_access_token}"
     gs_response = requests.get(gs_formulas_endpoint)
     targeting_spec_formula = gs_response.json()['values'][0][0]
     
     print(targeting_spec_formula)
 
+    # Get the formula for the creative hash in the adcopy sheet
+    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!L3?valueRenderOption=FORMULA&access_token={gs_access_token}"
+    gs_response = requests.get(gs_formulas_endpoint)
+    creative_hash_formula = gs_response.json()['values'][0][0]
+
+    print(creative_hash_formula)
+
     # Fix the broken references in the adset sheet
     payload = {
         "requests": [
-            # Clear existing data validation rules in the Audience columm
+            # Clear existing data validation rules in the Adsets Audience columm
             {
                 "setDataValidation": {
                     "range": {
@@ -177,6 +184,61 @@ def lambda_handler(event, context):
                     "cell": {
                         "userEnteredValue": {
                             "formulaValue": targeting_spec_formula
+                        }
+                    },
+                    "fields": "*"
+                }
+            },
+            # Clear existing data validation rules in the Adcopies Creative columm
+            {
+                "setDataValidation": {
+                    "range": {
+                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 10,
+                        "endColumnIndex": 11
+                    }
+                }
+            },
+            # Recreate the data validation rules in the Adcopies Creative column
+            {
+                "setDataValidation": {
+                    "range": {
+                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 10,
+                        "endColumnIndex": 11
+                    },
+                    "rule": {
+                        "condition": {
+                            "type": "ONE_OF_RANGE",
+                            "values": [
+                                {
+                                    "userEnteredValue": f"='{MEDIA_SHEET['name']}'!$B$3:$B"
+                                }
+                            ]
+                        },
+                        "inputMessage": "Please select a Creative from the dropdown list",
+                        "strict": True,
+                        "showCustomUi": True
+                    }
+                }
+            },
+            # Overwrite the creative hash formulas in the adcopy sheet
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 11,
+                        "endColumnIndex": 12
+                    },
+                    "cell": {
+                        "userEnteredValue": {
+                            "formulaValue": creative_hash_formula
                         }
                     },
                     "fields": "*"
