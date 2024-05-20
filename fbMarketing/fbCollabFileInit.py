@@ -125,11 +125,25 @@ def lambda_handler(event, context):
     print(targeting_spec_formula)
 
     # Get the formula for the creative hash in the adcopy sheet
-    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!L3?valueRenderOption=FORMULA&access_token={gs_access_token}"
+    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!G3?valueRenderOption=FORMULA&access_token={gs_access_token}"
     gs_response = requests.get(gs_formulas_endpoint)
     creative_hash_formula = gs_response.json()['values'][0][0]
 
     print(creative_hash_formula)
+
+    # Get the formula for the xlookups in the adcopy sheet
+    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!H3?valueRenderOption=FORMULA&access_token={gs_access_token}"
+    gs_response = requests.get(gs_formulas_endpoint)
+    xlookup_formula = gs_response.json()['values'][0][0]
+
+    print(xlookup_formula)
+
+    # Get the formula for the formatted CTA in the adcopy sheet
+    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!L3?valueRenderOption=FORMULA&access_token={gs_access_token}"
+    gs_response = requests.get(gs_formulas_endpoint)
+    formatted_cta_formula = gs_response.json()['values'][0][0]
+
+    print(formatted_cta_formula)
 
     # Fix the broken references in the adset sheet
     payload = {
@@ -189,27 +203,27 @@ def lambda_handler(event, context):
                     "fields": "*"
                 }
             },
-            # Clear existing data validation rules in the Adcopies Creative columm
+            # Clear existing data validation rules in the Adcopies sheet Creative columm
             {
                 "setDataValidation": {
                     "range": {
                         "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
                         "startRowIndex": 2,
                         "endRowIndex": 102,
-                        "startColumnIndex": 10,
-                        "endColumnIndex": 11
+                        "startColumnIndex": 5,
+                        "endColumnIndex": 6
                     }
                 }
             },
-            # Recreate the data validation rules in the Adcopies Creative column
+            # Recreate the data validation rules in the Adcopies sheet Creative column
             {
                 "setDataValidation": {
                     "range": {
                         "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
                         "startRowIndex": 2,
                         "endRowIndex": 102,
-                        "startColumnIndex": 10,
-                        "endColumnIndex": 11
+                        "startColumnIndex": 5,
+                        "endColumnIndex": 6
                     },
                     "rule": {
                         "condition": {
@@ -226,6 +240,18 @@ def lambda_handler(event, context):
                     }
                 }
             },
+            # Clear existing data validation rules in the Adcopies sheet CTA_formatted columm
+            {
+                "setDataValidation": {
+                    "range": {
+                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 11,
+                        "endColumnIndex": 12
+                    }
+                }
+            },
             # Overwrite the creative hash formulas in the adcopy sheet
             {
                 "repeatCell": {
@@ -239,6 +265,42 @@ def lambda_handler(event, context):
                     "cell": {
                         "userEnteredValue": {
                             "formulaValue": creative_hash_formula
+                        }
+                    },
+                    "fields": "*"
+                }
+            },
+            # Overwrite the xlookup formulas in the adcopy sheet
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 7,
+                        "endColumnIndex": 11
+                    },
+                    "cell": {
+                        "userEnteredValue": {
+                            "formulaValue": xlookup_formula
+                        }
+                    },
+                    "fields": "*"
+                }
+            },
+            # Overwrite the formatted CTA formulas in the adcopy sheet
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 11,
+                        "endColumnIndex": 12
+                    },
+                    "cell": {
+                        "userEnteredValue": {
+                            "formulaValue": formatted_cta_formula
                         }
                     },
                     "fields": "*"
