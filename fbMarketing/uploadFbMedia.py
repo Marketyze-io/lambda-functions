@@ -121,11 +121,13 @@ def lambda_handler(event, context):
         print(media_update_request.json())
 
         # Update the media hash in the adcopies sheet
+        media_hash_range = f"{CREATIVES_SHEET_NAME}!A{media_row_index}"
         media_hash_update_payload = {
+            'range': media_hash_range,
             'values': [[media_hash]]
         }
-        media_hash_update_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!B{media_row_index}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
-        media_hash_update_request = requests.post(media_hash_update_endpoint, json=media_hash_update_payload)
+        media_hash_update_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{media_hash_range}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
+        media_hash_update_request = requests.put(media_hash_update_endpoint, json=media_hash_update_payload)
         print(media_hash_update_request.status_code)
         print(media_hash_update_request.json())
 
