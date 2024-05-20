@@ -131,6 +131,13 @@ def lambda_handler(event, context):
         print(media_hash_update_request.status_code)
         print(media_hash_update_request.json())
 
+        # Delete the temporary file
+        os.remove(f'{TEMP_FILE_PATH}{file_name}')
+        print(f"Temporary file deleted")
+
+    # Post a message to slack
+    slack_post_message(channel_id, token, f':white_check_mark: Media uploaded for {ad_account_name} :white_check_mark:')
+
     return {
         'statusCode': 200
     }
