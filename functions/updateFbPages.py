@@ -13,7 +13,7 @@ def lambda_handler(event, context):
     spreadsheet_id  = event_params['spreadsheet_id']
 
     # Get the saved audiences from Facebook
-    pages_endpoint = f'https://graph.facebook.com/v19.0/{ad_account_id}/promoted_pages'
+    pages_endpoint = f'https://graph.facebook.com/v19.0/{ad_account_id}/promote_pages'
     headers = {
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {fb_access_token}'
