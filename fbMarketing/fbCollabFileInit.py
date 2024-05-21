@@ -146,6 +146,13 @@ def lambda_handler(event, context):
 
     print(formatted_cta_formula)
 
+    # Get the formula for the Page ID in the adcopy sheet
+    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!O3?valueRenderOption=FORMULA&access_token={gs_access_token}"
+    gs_response = requests.get(gs_formulas_endpoint)
+    page_id_formula = gs_response.json()['values'][0][0]
+
+    print(page_id_formula)
+
     # Fix the broken references in the adset sheet
     payload = {
         "requests": [
@@ -302,6 +309,61 @@ def lambda_handler(event, context):
                     "cell": {
                         "userEnteredValue": {
                             "formulaValue": formatted_cta_formula
+                        }
+                    },
+                    "fields": "*"
+                }
+            },
+            # Clear existing data validation rules in the Adcopies sheet Facebook Page columm
+            {
+                "setDataValidation": {
+                    "range": {
+                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 13,
+                        "endColumnIndex": 14
+                    }
+                }
+            },
+            # Recreate the data validation rules in the Adcopies sheet Facebook Page column
+            {
+                "setDataValidation": {
+                    "range": {
+                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 13,
+                        "endColumnIndex": 14
+                    },
+                    "rule": {
+                        "condition": {
+                            "type": "ONE_OF_RANGE",
+                            "values": [
+                                {
+                                    "userEnteredValue": f"='{PAGES_SHEET['name']}'!$A$3:$A"
+                                }
+                            ]
+                        },
+                        "inputMessage": "Please select a Facebook Page from the dropdown list",
+                        "strict": True,
+                        "showCustomUi": True
+                    }
+                }
+            },
+            # Overwrite the Page ID formulas in the adcopy sheet
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
+                        "startRowIndex": 2,
+                        "endRowIndex": 102,
+                        "startColumnIndex": 14,
+                        "endColumnIndex": 15
+                    },
+                    "cell": {
+                        "userEnteredValue": {
+                            "formulaValue": page_id_formula
                         }
                     },
                     "fields": "*"
