@@ -45,6 +45,14 @@ def lambda_handler(event, context):
     token = json.loads(token)
     print("Slack token retrieved")
 
+    adcopies_created = 0
+    error_flag = False
+
+    # Send an ack to Slack
+    print("Sending ack to Slack")
+    slack_post_message(channel_id, token, ':rocket: Starting bulk adcopy creation! :rocket:')
+    print("Ack sent to Slack")
+
     # Get creative data from Google Sheets
     gs_creatives_count_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!A1?access_token={gs_access_token}"
     gs_creatives_count_response = requests.get(gs_creatives_count_endpoint)
@@ -88,6 +96,19 @@ def lambda_handler(event, context):
         adcopy_data = adcopy_response.json()
         print(adcopy_data)
 
+        if not 'id' in adcopy_data:
+                if 'error' in adcopy_data:
+                    print(f"Error creating adcopy: {adcopy_data['error']}")
+                    slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating an adcopy! :warning:\n\nAdcopy Name: {creative[0]}\nError: {adcopy_data['error']['error_user_msg']}\n\nAll subsequent adcopies will not be created. Please check the data in Google Sheets and try again.")
+                elif 'message' in adcopy_data:
+                    print(f"Error creating adcopy: {adcopy_data['message']}")
+                    slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating an adcopy! :warning:\n\nAdset Name: {creative[0]}\nError: {adcopy_data['message']}\n\nAll subsequent adcopies will not be created. Please check the data in Google Sheets and try again.")
+                else:
+                    print(f"Error creating adcopy: {adcopy_data}")
+                    slack_post_message(channel_id, token, f":warning: Whoops! There's been a problem with creating an adcopy! :warning:\n\nAdset Name: {creative[0]}\nError: {adcopy_data}\n\nAll subsequent adcopies will not be created. Please check the data in Google Sheets and try again.")
+                error_flag = True
+                break
+
         # Update IDs in Google Sheets
         creative_id = adcopy_data['creative_id']
         adcopy_id = adcopy_data['ad_id']
@@ -108,7 +129,14 @@ def lambda_handler(event, context):
         gs_update_creative_id_response = requests.put(gs_update_creative_id_endpoint, data=gs_update_creative_id_payload)
         print(gs_update_creative_id_response.json())
 
-    slack_post_message(channel_id, token, f':robot_face: Adcopies created in {ad_account_name} :robot_face:')
+        adcopies_created += 1
+
+    # Send a summary of the results to the user in Slack
+    print("Sending summary to Slack")
+    slack_post_message(channel_id, token, f':tada: {adcopies_created} adsets created successfully! :tada:')
+    if error_flag:
+        slack_post_message(channel_id, token, "But there was an error with one of the adcopies. Please check the data in Google Sheets and try again.")
+    print("Summary sent to Slack")
 
     return {
         'statusCode': 200,
