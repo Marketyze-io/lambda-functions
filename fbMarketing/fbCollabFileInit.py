@@ -19,7 +19,7 @@ ADSETS_SHEET = {'name': '🤖Rob_FB_Adsets', 'id': '655550453'}
 ADCOPIES_SHEET = {'name': '🤖Rob_FB_Adcopies', 'id': '224614968'}
 AUDIENCES_SHEET = {'name': '🤖Rob_FB_Audiences', 'id': '862287605'}
 MEDIA_SHEET = {'name': '🤖Rob_FB_Media', 'id': '1547157615'}
-
+PAGES_SHEET = {'name': '🤖Rob_FB_Pages', 'id': '1337036354'}
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
@@ -64,7 +64,8 @@ def lambda_handler(event, context):
         ADSETS_SHEET['name']: ADSETS_SHEET['id'],
         ADCOPIES_SHEET['name']: ADCOPIES_SHEET['id'],
         AUDIENCES_SHEET['name']: AUDIENCES_SHEET['id'],
-        MEDIA_SHEET['name']: MEDIA_SHEET['id']
+        MEDIA_SHEET['name']: MEDIA_SHEET['id'],
+        PAGES_SHEET['name']: PAGES_SHEET['id']
     }
     gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
     gs_response = requests.get(gs_endpoint)
