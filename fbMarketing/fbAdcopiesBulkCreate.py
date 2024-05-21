@@ -62,6 +62,11 @@ def lambda_handler(event, context):
 
     # Create Adcopies
     for creative in gs_creatives:
+        # Skip if adcopy is already created
+        if creative[13]:
+            print(f"Adcopy already created for {creative[0]}")
+            continue
+
         # Prepare Adcopy payload
         payload = {
             'fb_access_token': fb_access_token,
