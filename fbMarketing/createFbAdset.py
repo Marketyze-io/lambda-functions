@@ -5,6 +5,9 @@ import urllib.parse as urlparse
 def lambda_handler(event, context):
     event_body = event['body']
 
+    start_time = None
+    end_time = None
+
     # Check if event body is in JSON form
     if event_body.startswith('{'):
         event_params       = json.loads(event_body)
@@ -20,8 +23,10 @@ def lambda_handler(event, context):
         daily_budget       = event_params['daily_budget']
         targeting          = event_params['targeting']
         status             = event_params['status']
-        start_time         = event_params['start_time']
-        end_time           = event_params['end_time']
+        if 'start_time' in event_params:
+            start_time     = event_params['start_time']
+        if 'end_time' in event_params:
+            end_time       = event_params['end_time']
 
     # If not, then it is in URL-encoded form
     else:
@@ -38,8 +43,10 @@ def lambda_handler(event, context):
         daily_budget       = event_params['daily_budget'][0]
         targeting          = event_params['targeting'][0]
         status             = event_params['status'][0]
-        start_time         = event_params['start_time'][0]
-        end_time           = event_params['end_time'][0]
+        if 'start_time' in event_params:
+            start_time     = event_params['start_time'][0]
+        if 'end_time' in event_params:
+            end_time       = event_params['end_time'][0]
 
     form_data = {
         'name'                 : adset_name,
@@ -51,14 +58,12 @@ def lambda_handler(event, context):
         'billing_event'        : billing_event,
         'daily_budget'         : daily_budget,
         'targeting'            : targeting,
-        'status'               : status,
-        'start_time'           : start_time,
-        'end_time'             : end_time
+        'status'               : status
     }
-    if start_time == "":
-        del form_data['start_time']
-    if end_time == "":
-        del form_data['end_time']
+    if start_time is not None:
+        form_data['start_time'] = start_time
+    if end_time is not None:
+        form_data['end_time'] = end_time
     
     print(f'form_data: {form_data}')
 
