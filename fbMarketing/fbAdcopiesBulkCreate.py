@@ -64,14 +64,14 @@ def lambda_handler(event, context):
             'body': json.dumps('No adcopies to create')
         }
     
-    gs_creatives_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!A3:O{2+gs_creatives_count}?access_token={gs_access_token}"
+    gs_creatives_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!A3:P{2+gs_creatives_count}?access_token={gs_access_token}"
     gs_creatives_response = requests.get(gs_creatives_endpoint)
     gs_creatives = gs_creatives_response.json()['values']
 
     # Create Adcopies
     for creative in gs_creatives:
         # Skip if adcopy is already created
-        if creative[13]:
+        if creative[1]:
             print(f"Adcopy already created for {creative[0]}")
             continue
 
@@ -79,16 +79,16 @@ def lambda_handler(event, context):
         payload = {
             'fb_access_token': fb_access_token,
             'ad_account_id': ad_account_id,
-            'adset_id': creative[2],
             'name': creative[0],
-            'page_id': creative[14],
+            'adset_id': creative[2],
+            'status': creative[4],
             'media_hash': creative[6],
             'message': creative[7],
             'caption': creative[8],
             'description': creative[9],
             'call_to_action': creative[11],
             'link_url': creative[12],
-            'status': creative[4]
+            'page_id': creative[14],
         }
 
         print(f"Creating adcopy for {creative[0]}")
@@ -125,9 +125,9 @@ def lambda_handler(event, context):
         }
         gs_update_ad_id_response = requests.put(gs_update_ad_id_endpoint, json=gs_update_ad_id_payload)
         print(gs_update_ad_id_response.json())
-        gs_update_creative_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!N{creative_row_index}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
+        gs_update_creative_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!P{creative_row_index}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
         gs_update_creative_id_payload = {
-            'range': f"{ADCOPIES_SHEET['name']}!N{creative_row_index}",
+            'range': f"{ADCOPIES_SHEET['name']}!P{creative_row_index}",
             'values': [[creative_id]]
         }
         gs_update_creative_id_response = requests.put(gs_update_creative_id_endpoint, json=gs_update_creative_id_payload)
