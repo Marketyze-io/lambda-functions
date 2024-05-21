@@ -118,14 +118,14 @@ def lambda_handler(event, context):
         adcopy_id = adcopy_data['body']['ad_id']
         creative_row_index = gs_creatives.index(creative) + 3
         print(f"Updating Google Sheets for creative {creative_id}")
-        gs_update_ad_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!B{creative_row_index}?access_token={gs_access_token}"
-        gs_updatead_id_payload = {
+        gs_update_ad_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!B{creative_row_index}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
+        gs_update_ad_id_payload = {
             'range': f"{ADCOPIES_SHEET['name']}!B{creative_row_index}",
             'values': [[adcopy_id]]
         }
-        gs_update_ad_id_response = requests.put(gs_update_ad_id_endpoint, json=gs_updatead_id_payload)
+        gs_update_ad_id_response = requests.put(gs_update_ad_id_endpoint, json=gs_update_ad_id_payload)
         print(gs_update_ad_id_response.json())
-        gs_update_creative_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!N{creative_row_index}?access_token={gs_access_token}"
+        gs_update_creative_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!N{creative_row_index}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
         gs_update_creative_id_payload = {
             'range': f"{ADCOPIES_SHEET['name']}!N{creative_row_index}",
             'values': [[creative_id]]
