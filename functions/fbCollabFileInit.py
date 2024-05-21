@@ -115,7 +115,7 @@ def lambda_handler(event, context):
         }
         gs_rename_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
         gs_response = requests.post(gs_rename_endpoint, json=payload)
-        new_sheet_ids[sheet_name] = sheet_id
+        new_sheet_ids[sheet_name] = new_sheet_id
 
     print(new_sheet_ids)
 
