@@ -76,7 +76,7 @@ def lambda_handler(event, context):
 
     # Create Ad Creative
     ad_creatives_endpoint = f'{FB_ROOT_ENDPOINT}{ad_account_id}/adcreatives'
-    ad_creatives_response = requests.post(ad_creatives_endpoint, data=payload)
+    ad_creatives_response = requests.post(ad_creatives_endpoint, json=payload)
     ad_creatives_response = ad_creatives_response.json()
 
     print(ad_creatives_response)
@@ -87,14 +87,14 @@ def lambda_handler(event, context):
         'name': name,
         'adset_id': adset_id,
         'creative': {
-            'creative_id': ad_creatives_response.id
+            'creative_id': ad_creatives_response["id"]
         },
         'status': status,
     }
 
     # Create Adcopy
     ad_copies_endpoint = f'{FB_ROOT_ENDPOINT}{ad_account_id}/ads'
-    ad_copies_response = requests.post(ad_copies_endpoint, data=payload)
+    ad_copies_response = requests.post(ad_copies_endpoint, json=payload)
     ad_copies_response = ad_copies_response.json()
 
     print(ad_copies_response)
@@ -102,7 +102,7 @@ def lambda_handler(event, context):
     return {
         'statusCode': 200,
         'body': {
-            'creative_id': ad_creatives_response.id,
-            'ad_id':       ad_copies_response.id
+            'creative_id': ad_creatives_response["id"],
+            'ad_id':       ad_copies_response["id"]
         }
     }
