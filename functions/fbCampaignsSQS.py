@@ -86,7 +86,10 @@ def lambda_handler(event, context):
                 'campaign_status': campaign_status,
                 'special_ad_categories': special_ad_categories,
                 'access_token': fbAccessToken,
-                'ad_account_id': adAccountId
+                'ad_account_id': adAccountId,
+                'spreadsheet_id': spreadsheetId,
+                'row_number': f'{data.index(row) + 3}',
+                'gs_access_token': gsAccessToken
             }
 
             # Send a message to the SQS queue
