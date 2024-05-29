@@ -8,7 +8,7 @@ GOOGLE_SHEETS_SHEET_NAME = '🤖Rob_FB_Adsets'
 SUCCESS_QUEUE_URL = 'https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdsets-successfulInvocation'
 
 def lambda_handler(event, context):
-    event_params          = json.loads(event['Records'][0]['body'])
+    event_params       = json.loads(event['Records'][0]['body'])
     start_time = None
     end_time   = None
     ad_account_id      = event_params['ad_account_id']
@@ -40,7 +40,7 @@ def lambda_handler(event, context):
         'bid_amount'           : bid_amount,
         'billing_event'        : billing_event,
         'daily_budget'         : daily_budget,
-        'targeting'            : targeting,
+        'targeting'            : json.loads(targeting),
         'status'               : status
     }
     if start_time is not None:
@@ -59,6 +59,7 @@ def lambda_handler(event, context):
     }
     response = requests.post(url, headers=headers, data=form_data)
     if response.status_code != 200:
+        print(response.json())
         return {
             "statusCode": response.status_code,
         }
