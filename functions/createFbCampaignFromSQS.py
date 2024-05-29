@@ -1,8 +1,11 @@
 import json
 import requests
+import boto3
 
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 GOOGLE_SHEETS_SHEET_NAME = '🤖Rob_FB_Campaigns'
+
+SUCCESS_QUEUE_URL = 'https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbCampaigns-successfulInvocation'
 
 def lambda_handler(event, context):
   event_params          = json.loads(event['Records'][0]['body'])
@@ -29,6 +32,8 @@ def lambda_handler(event, context):
   }
   print(f'form_data: {form_data}')
 
+  sqs = boto3.client('sqs', region_name='ap-southeast-1')
+
   # Create the campaign in Facebook Ads Manager
   url = f'https://graph.facebook.com/v19.0/{ad_account_id}/campaigns'
   response = requests.post(url, data=form_data)
@@ -53,6 +58,16 @@ def lambda_handler(event, context):
     return {
       "statusCode": response.status_code,
     }
+  
+  # Send a success message to the SQS
+  response = sqs.send_message(
+    QueueUrl=SUCCESS_QUEUE_URL,
+    MessageBody=json.dumps({
+      'campaign_id': campaign_id,
+      'row_number': row_number
+      })
+  )
+  print(f'Success message sent to SQS: {response}')
   
   return {
     "statusCode": 200
