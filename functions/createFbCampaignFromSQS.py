@@ -42,12 +42,14 @@ def lambda_handler(event, context):
 
   # Update the Google Sheets row with the campaign ID
   campaign_id = response_data['id']
-  gsEndpoint = f'{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/\'{GOOGLE_SHEETS_SHEET_NAME}\'!B{row_number}?access_token={gs_access_token}'
+  gsEndpoint = f'{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/\'{GOOGLE_SHEETS_SHEET_NAME}\'!B{row_number}?valueInputOption=USER_ENTERED&access_token={gs_access_token}'
   gsPayload = {
+    'range': f'\'{GOOGLE_SHEETS_SHEET_NAME}\'!B{row_number}',
     'values': [[campaign_id]]
   }
   response = requests.put(gsEndpoint, json=gsPayload)
   if response.status_code != 200:
+    print(response.json())
     return {
       "statusCode": response.status_code,
     }
