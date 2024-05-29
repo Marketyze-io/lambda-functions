@@ -1,6 +1,8 @@
 import json
 import os
 import boto3
+import datetime
+import math
 import urllib.parse as urlparse
 import urllib.request
 import requests
@@ -9,10 +11,15 @@ AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 SQS_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbCampaignCreation.fifo"
+LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbCampaigns-checkStatus"
+ROLE_ARN = "arn:aws:iam::533267173231:role/service-role/Scheduler_fbCampaigns-checkStatus"
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 GOOGLE_SHEETS_SHEET_NAME = '🤖Rob_FB_Campaigns'
+
+TIMEOUT = 15
+CONCURRENCY = 10
 
 def slack_post_message(channel_id, token, message):
     slack_payload = {
@@ -42,6 +49,7 @@ def lambda_handler(event, context):
 
     campaignsCreated = 0
     sqs = boto3.client('sqs', region_name='ap-southeast-1')
+    scheduler = boto3.client('scheduler', region_name='ap-southeast-1')
     
     # Get the token from AWS Parameter Store
     token = get_aws_secret(SECRET_NAME)
@@ -102,10 +110,52 @@ def lambda_handler(event, context):
             print(f"Message sent to SQS: {response}")
 
             campaignsCreated += 1
+    
+    if campaignsCreated == 0:
+        slack_post_message(channel_id, token, ':question: No campaigns were created! :question:')
+        return {
+            'statusCode': 200
+        }
+
+    timer_seconds_full = math.ceil(campaignsCreated/CONCURRENCY)*TIMEOUT
+    timer_minutes = math.floor(timer_seconds_full/60)
+    timer_seconds = timer_seconds_full % 60
+
+    # Get the current time in UTC
+    datetime_now = datetime.datetime.now()
+    # Get the seconds to the next minute
+    seconds_to_next_minute = 60 - datetime_now.second
+    if seconds_to_next_minute < timer_seconds:
+        datetime_timer = datetime_now + datetime.timedelta(minutes=timer_minutes+2) - datetime.timedelta(seconds=datetime_now.second)
+    else:
+        datetime_timer = datetime_now + datetime.timedelta(minutes=timer_minutes+1) - datetime.timedelta(seconds=datetime_now.second)
+        
+    # Create a scheduled event to check the status of the campaigns
+    response = scheduler.create_schedule(
+        ActionAfterCompletion='DELETE',
+        Description='Check the status of the campaigns created',
+        FlexibleTimeWindow={
+            'Mode': 'OFF'
+        },
+        Name='fbCampaigns-checkStatus',
+        ScheduleExpression=f'at({datetime_timer.strftime("%Y-%m-%dT%H:%M:%S")})',
+        Target={
+            'Arn': LAMBDA_ARN,
+            'Input': json.dumps({
+                'channel_id': channel_id,
+                'campaigns_queued': campaignsCreated,
+            }),
+            'RoleArn': ROLE_ARN
+        }
+    )
+    print(f"Scheduler response: {response}")
+    print(f"Scheduled event created at {datetime_now.strftime("%Y-%m-%d %H:%M:%S")} for {datetime_timer.strftime("%Y-%m-%d %H:%M:%S")}")
 
     # Send a summary of the results to the user in Slack
+    timer_local = datetime_timer + datetime.timedelta(hours=7)
     print("Sending summary to Slack")
     slack_post_message(channel_id, token, f':hand: {campaignsCreated} campaigns have been queued for creation! :hand:')
+    slack_post_message(channel_id, token, f':hourglass_flowing_sand: I\'ll get back to you at around {timer_local.strftime("%H:%M")} :hourglass_flowing_sand:')
     print("Summary sent to Slack")
 
     return {
