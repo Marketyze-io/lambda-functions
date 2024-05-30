@@ -18,12 +18,13 @@ MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
 def lambda_handler(event, context):
-    file_id         = event['file_id']
-    ad_account_id   = event['ad_account_id']
-    fb_access_token = event['access_token']
-    row_number      = event['row_number']
-    spreadsheet_id  = event['spreadsheet_id']
-    gs_access_token = event['gs_access_token']
+    event_params    = json.loads(event['Records'][0]['body'])
+    file_id         = event_params['file_id']
+    ad_account_id   = event_params['ad_account_id']
+    fb_access_token = event_params['access_token']
+    row_number      = event_params['row_number']
+    spreadsheet_id  = event_params['spreadsheet_id']
+    gs_access_token = event_params['gs_access_token']
 
     sqs = boto3.client('sqs', region_name='ap-southeast-1')
 
