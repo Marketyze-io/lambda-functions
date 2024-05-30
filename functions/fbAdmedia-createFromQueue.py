@@ -97,8 +97,7 @@ def lambda_handler(event, context):
         MessageBody=json.dumps({
             'file_id': file_id,
             'row_number': row_number
-        }),
-        MessageGroupId=f'admedia-{file_id}'
+        })
     )
 
     return {
