@@ -17,10 +17,16 @@ MASTER_WORSKSHEET_NAME = "spreadsheet-master-list"
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 CAMPAIGNS_SHEET = {'name': '🤖Rob_FB_Campaigns', 'id': '987478379'}
 ADSETS_SHEET = {'name': '🤖Rob_FB_Adsets', 'id': '655550453'}
-ADCOPIES_SHEET = {'name': '🤖Rob_FB_Adcopies', 'id': '224614968'}
+ADS_SHEET = {'name': '🤖Rob_FB_Ads', 'id': '224614968'}
 AUDIENCES_SHEET = {'name': '🤖Rob_FB_Audiences', 'id': '862287605'}
 MEDIA_SHEET = {'name': '🤖Rob_FB_Media', 'id': '1547157615'}
 PAGES_SHEET = {'name': '🤖Rob_FB_Pages', 'id': '1337036354'}
+
+TARGETING_SPEC_FORMULA_CELL = "N3"
+CREATIVE_HASH_FORMULA_CELL = "N3"
+XLOOKUP_FORMULA_CELL = "J3"
+FORMATTED_CTA_FORMULA_CELL = "O3"
+PAGE_ID_FORMULA_CELL = "P3"
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
@@ -63,7 +69,7 @@ def lambda_handler(event, context):
     master_sheet_ids = {
         CAMPAIGNS_SHEET['name']: CAMPAIGNS_SHEET['id'],
         ADSETS_SHEET['name']: ADSETS_SHEET['id'],
-        ADCOPIES_SHEET['name']: ADCOPIES_SHEET['id'],
+        ADS_SHEET['name']: ADS_SHEET['id'],
         AUDIENCES_SHEET['name']: AUDIENCES_SHEET['id'],
         MEDIA_SHEET['name']: MEDIA_SHEET['id'],
         PAGES_SHEET['name']: PAGES_SHEET['id']
@@ -71,6 +77,12 @@ def lambda_handler(event, context):
     gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
     gs_response = requests.get(gs_endpoint)
     gs_sheets = gs_response.json()['sheets']
+
+    # Payload for fixing the broken references
+    refs_payload = {
+        "requests": []
+    }
+
     # Check if the sheet already exists, then remove it from the master list
     for sheet in gs_sheets:
         sheet_name = sheet['properties']['title']
@@ -118,263 +130,6 @@ def lambda_handler(event, context):
         new_sheet_ids[sheet_name] = new_sheet_id
 
     print(new_sheet_ids)
-
-    # Get the formula for the targeting spec in the adset sheet
-    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADSETS_SHEET['name']}!K3?valueRenderOption=FORMULA&access_token={gs_access_token}"
-    gs_response = requests.get(gs_formulas_endpoint)
-    targeting_spec_formula = gs_response.json()['values'][0][0]
-    
-    print(targeting_spec_formula)
-
-    # Get the formula for the creative hash in the adcopy sheet
-    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!G3?valueRenderOption=FORMULA&access_token={gs_access_token}"
-    gs_response = requests.get(gs_formulas_endpoint)
-    creative_hash_formula = gs_response.json()['values'][0][0]
-
-    print(creative_hash_formula)
-
-    # Get the formula for the xlookups in the adcopy sheet
-    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!H3?valueRenderOption=FORMULA&access_token={gs_access_token}"
-    gs_response = requests.get(gs_formulas_endpoint)
-    xlookup_formula = gs_response.json()['values'][0][0]
-
-    print(xlookup_formula)
-
-    # Get the formula for the formatted CTA in the adcopy sheet
-    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!L3?valueRenderOption=FORMULA&access_token={gs_access_token}"
-    gs_response = requests.get(gs_formulas_endpoint)
-    formatted_cta_formula = gs_response.json()['values'][0][0]
-
-    print(formatted_cta_formula)
-
-    # Get the formula for the Page ID in the adcopy sheet
-    gs_formulas_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADCOPIES_SHEET['name']}!O3?valueRenderOption=FORMULA&access_token={gs_access_token}"
-    gs_response = requests.get(gs_formulas_endpoint)
-    page_id_formula = gs_response.json()['values'][0][0]
-
-    print(page_id_formula)
-
-    # Fix the broken references in the adset sheet
-    payload = {
-        "requests": [
-            # Clear existing data validation rules in the Adsets Audience columm
-            {
-                "setDataValidation": {
-                    "range": {
-                        "sheetId": new_sheet_ids[ADSETS_SHEET['name']],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 9,
-                        "endColumnIndex": 10
-                    }
-                }
-            },
-            # Recreate the data validation rules in the Audience column
-            {
-                "setDataValidation": {
-                    "range": {
-                        "sheetId": new_sheet_ids[ADSETS_SHEET['name']],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 9,
-                        "endColumnIndex": 10
-                    },
-                    "rule": {
-                        "condition": {
-                            "type": "ONE_OF_RANGE",
-                            "values": [
-                                {
-                                    "userEnteredValue": f"='{AUDIENCES_SHEET['name']}'!$A$3:$A"
-                                }
-                            ]
-                        },
-                        "inputMessage": "Please select an audience from the dropdown list",
-                        "strict": True,
-                        "showCustomUi": True
-                    }
-                }
-            },
-            # Overwrite the targeting spec formulas in the adset sheet
-            {
-                "repeatCell": {
-                    "range": {
-                        "sheetId": new_sheet_ids['🤖Rob_FB_Adsets'],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 10,
-                        "endColumnIndex": 11
-                    },
-                    "cell": {
-                        "userEnteredValue": {
-                            "formulaValue": targeting_spec_formula
-                        }
-                    },
-                    "fields": "*"
-                }
-            },
-            # Clear existing data validation rules in the Adcopies sheet Creative columm
-            {
-                "setDataValidation": {
-                    "range": {
-                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 5,
-                        "endColumnIndex": 6
-                    }
-                }
-            },
-            # Recreate the data validation rules in the Adcopies sheet Creative column
-            {
-                "setDataValidation": {
-                    "range": {
-                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 5,
-                        "endColumnIndex": 6
-                    },
-                    "rule": {
-                        "condition": {
-                            "type": "ONE_OF_RANGE",
-                            "values": [
-                                {
-                                    "userEnteredValue": f"='{MEDIA_SHEET['name']}'!$B$3:$B"
-                                }
-                            ]
-                        },
-                        "inputMessage": "Please select a Creative from the dropdown list",
-                        "strict": True,
-                        "showCustomUi": True
-                    }
-                }
-            },
-            # Clear existing data validation rules in the Adcopies sheet CTA_formatted columm
-            {
-                "setDataValidation": {
-                    "range": {
-                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 11,
-                        "endColumnIndex": 12
-                    }
-                }
-            },
-            # Overwrite the creative hash formulas in the adcopy sheet
-            {
-                "repeatCell": {
-                    "range": {
-                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 11,
-                        "endColumnIndex": 12
-                    },
-                    "cell": {
-                        "userEnteredValue": {
-                            "formulaValue": creative_hash_formula
-                        }
-                    },
-                    "fields": "*"
-                }
-            },
-            # Overwrite the xlookup formulas in the adcopy sheet
-            {
-                "repeatCell": {
-                    "range": {
-                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 7,
-                        "endColumnIndex": 11
-                    },
-                    "cell": {
-                        "userEnteredValue": {
-                            "formulaValue": xlookup_formula
-                        }
-                    },
-                    "fields": "*"
-                }
-            },
-            # Overwrite the formatted CTA formulas in the adcopy sheet
-            {
-                "repeatCell": {
-                    "range": {
-                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 11,
-                        "endColumnIndex": 12
-                    },
-                    "cell": {
-                        "userEnteredValue": {
-                            "formulaValue": formatted_cta_formula
-                        }
-                    },
-                    "fields": "*"
-                }
-            },
-            # Clear existing data validation rules in the Adcopies sheet Facebook Page columm
-            {
-                "setDataValidation": {
-                    "range": {
-                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 13,
-                        "endColumnIndex": 14
-                    }
-                }
-            },
-            # Recreate the data validation rules in the Adcopies sheet Facebook Page column
-            {
-                "setDataValidation": {
-                    "range": {
-                        "sheetId": new_sheet_ids[ADCOPIES_SHEET['name']],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 13,
-                        "endColumnIndex": 14
-                    },
-                    "rule": {
-                        "condition": {
-                            "type": "ONE_OF_RANGE",
-                            "values": [
-                                {
-                                    "userEnteredValue": f"='{PAGES_SHEET['name']}'!$A$3:$A"
-                                }
-                            ]
-                        },
-                        "inputMessage": "Please select a Facebook Page from the dropdown list",
-                        "strict": True,
-                        "showCustomUi": True
-                    }
-                }
-            },
-            # Overwrite the Page ID formulas in the adcopy sheet
-            {
-                "repeatCell": {
-                    "range": {
-                        "sheetId": new_sheet_ids['🤖Rob_FB_Adcopies'],
-                        "startRowIndex": 2,
-                        "endRowIndex": 102,
-                        "startColumnIndex": 14,
-                        "endColumnIndex": 15
-                    },
-                    "cell": {
-                        "userEnteredValue": {
-                            "formulaValue": page_id_formula
-                        }
-                    },
-                    "fields": "*"
-                }
-            }
-        ]
-    }
-    gs_fix_references_endpoint = f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}:batchUpdate?access_token={gs_access_token}"
-    gs_response = requests.post(gs_fix_references_endpoint, json=payload)
-    print(gs_response.json())
 
     # Update the saved audiences sheet
     payload = {
