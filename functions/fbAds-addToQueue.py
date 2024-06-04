@@ -20,7 +20,7 @@ GOOGLE_SHEETS_SHEET_NAME = '🤖Rob_FB_Ads'
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
-TIMEOUT = 10
+TIMEOUT = 30
 CONCURRENCY = 10
 
 def slack_post_message(channel_id, token, message):

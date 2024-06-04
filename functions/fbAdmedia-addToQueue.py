@@ -23,7 +23,7 @@ FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
-TIMEOUT = 10
+TIMEOUT = 30
 CONCURRENCY = 10
 
 def slack_post_message(channel_id, token, message):
