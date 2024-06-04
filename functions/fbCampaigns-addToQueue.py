@@ -80,10 +80,10 @@ def lambda_handler(event, context):
     for row in data:
         if row[1] == "":
             campaign_name = row[0]
-            campaign_objective = row[3]
-            campaign_buying_type = row[4]
-            campaign_status = row[5]
-            special_ad_categories = row[11]
+            campaign_objective = row[11]
+            campaign_buying_type = row[3]
+            campaign_status = row[4]
+            special_ad_categories = row[10]
             if len(special_ad_categories) == 0:
                 special_ad_categories = ["NONE"]
 

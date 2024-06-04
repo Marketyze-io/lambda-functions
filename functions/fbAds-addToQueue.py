@@ -16,7 +16,7 @@ LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAds-checkSta
 ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAds-checkStatus"
 
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
-ADS_SHEET = {'name': '🤖Rob_FB_Adcopies'}
+GOOGLE_SHEETS_SHEET_NAME = '🤖Rob_FB_Ads'
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
@@ -62,12 +62,12 @@ def lambda_handler(event, context):
     print("Ack sent to Slack")
 
     # Get creative data from Google Sheets
-    gs_creatives_count_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{ADS_SHEET['name']}!A1?access_token={gs_access_token}"
+    gs_creatives_count_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!A1?access_token={gs_access_token}"
     gs_creatives_count_response = requests.get(gs_creatives_count_endpoint)
     gs_creatives_count = int(gs_creatives_count_response.json()['values'][0][0])
     print(f"Number of rows in Google Sheets: {gs_creatives_count}")
     row_num = str(int(gs_creatives_count) + 2)
-    gs_creatives_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{ADS_SHEET['name']}!A3:P{row_num}?access_token={gs_access_token}"
+    gs_creatives_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!A3:P{row_num}?access_token={gs_access_token}"
     print("Getting data from Google Sheets")
     gs_creatives_response = requests.get(gs_creatives_endpoint)
     if gs_creatives_response.status_code != 200:
@@ -86,19 +86,19 @@ def lambda_handler(event, context):
         # Prepare Adcopy payload
         payload = {
             'fb_access_token': fb_access_token,
-            'ad_account_id': ad_account_id,
-            'name': creative[0],
-            'adset_id': creative[2],
-            'status': creative[4],
-            'media_hash': creative[6],
-            'message': creative[7],
-            'caption': creative[8],
-            'description': creative[9],
-            'call_to_action': creative[11],
-            'link_url': creative[12],
-            'page_id': creative[14],
-            'spreadsheet_id': spreadsheet_id,
-            'row_number': f'{gs_creatives.index(creative)+3}',
+            'ad_account_id'  : ad_account_id,
+            'name'           : creative[0],
+            'adset_id'       : creative[3],
+            'status'         : creative[5],
+            'link_url'       : creative[8],
+            'message'        : creative[9],
+            'caption'        : creative[10],
+            'description'    : creative[11],
+            'media_hash'     : creative[13],
+            'call_to_action' : creative[14],
+            'page_id'        : creative[15],
+            'spreadsheet_id' : spreadsheet_id,
+            'row_number'     : f'{gs_creatives.index(creative)+3}',
             'gs_access_token': gs_access_token
         }
 

@@ -6,7 +6,6 @@ import math
 import urllib.parse as urlparse
 import urllib.request
 import requests
-import shutil
 
 AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/"
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"

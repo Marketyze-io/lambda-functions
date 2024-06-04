@@ -79,18 +79,18 @@ def lambda_handler(event, context):
     # Create the adsets for rows without an adset ID
     for row in data:
         if row[1] == "":
-            adset_name = row[0]
-            campaign_id = row[2]
-            destination_type = row[3]
+            adset_name        = row[0]
+            campaign_id       = row[2]
+            destination_type  = row[3]
             optimization_goal = row[4]
-            bid_strategy = row[5]
-            bid_amount = row[6]
-            billing_event = row[7]
-            daily_budget = row[8]
-            targeting = row[10]
-            status = row[11]
-            start_time = row[14]
-            end_time = row[15]
+            bid_strategy      = row[5]
+            bid_amount        = row[6]
+            billing_event     = row[7]
+            daily_budget      = row[8]
+            status            = row[10]
+            targeting         = row[13]
+            start_time        = row[14]
+            end_time          = row[15]
 
             payload = {
                 'ad_account_id': ad_account_id,
