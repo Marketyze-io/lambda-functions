@@ -48,7 +48,6 @@ def lambda_handler(event, context):
     spreadsheet_id  = event['spreadsheet_id']
     fb_access_token = event['fb_access_token']
     ad_account_id   = event['ad_account_id']
-    ad_account_name = event['ad_account_name']
 
     ads_created = 0
     sqs = boto3.client('sqs', region_name='ap-southeast-1')
@@ -98,6 +97,9 @@ def lambda_handler(event, context):
             'call_to_action': creative[11],
             'link_url': creative[12],
             'page_id': creative[14],
+            'spreadsheet_id': spreadsheet_id,
+            'row_number': row_num,
+            'gs_access_token': gs_access_token
         }
 
         # Send a message to the SQS queue
