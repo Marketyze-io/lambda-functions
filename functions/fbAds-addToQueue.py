@@ -98,7 +98,7 @@ def lambda_handler(event, context):
             'link_url': creative[12],
             'page_id': creative[14],
             'spreadsheet_id': spreadsheet_id,
-            'row_number': row_num,
+            'row_number': f'{gs_creatives.index(creative)+3}',
             'gs_access_token': gs_access_token
         }
 

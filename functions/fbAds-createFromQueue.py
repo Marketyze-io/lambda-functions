@@ -87,8 +87,8 @@ def lambda_handler(event, context):
     ad_id = ad_copies_response["id"]
 
     # Update the Google Sheets row with the ad and creative ID
-    gs_ad_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!B{row_number}?access_token={gs_access_token}"
-    gs_creative_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!P{row_number}?access_token={gs_access_token}"
+    gs_ad_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!B{row_number}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
+    gs_creative_id_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!P{row_number}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
     gs_ad_id_payload = {
         'range': f'{GOOGLE_SHEETS_SHEET_NAME}!B{row_number}',
         'values': [[ad_id]]
@@ -99,9 +99,9 @@ def lambda_handler(event, context):
     }
     gs_ad_id_response = requests.put(gs_ad_id_endpoint, json=gs_ad_id_payload)
     gs_creative_id_response = requests.put(gs_creative_id_endpoint, json=gs_creative_id_payload)
+    print(gs_ad_id_response.json())
+    print(gs_creative_id_response.json())
     if gs_ad_id_response.status_code != 200 or gs_creative_id_response.status_code != 200:
-        print(gs_ad_id_response.json())
-        print(gs_creative_id_response.json())
         return {
             "statusCode": gs_ad_id_response.status_code,
         }
