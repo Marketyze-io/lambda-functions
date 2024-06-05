@@ -10,6 +10,7 @@ SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 UPDATE_SAVED_AUDIENCES_ENDPOINT = "https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/audiences/update"
 UPDATE_PAGES_ENDPOINT = "https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/pages/update"
+UPDATE_ADSPIXELS_ENDPOINT = "https://srdb19dj4h.execute-api.ap-southeast-1.amazonaws.com/default/adspixels/update"
 
 MASTER_SHEET_ID = "1am9nNSWcUYpbvHFA8nk0GAvzedYvyBGTqNNT9YAX0wM"
 MASTER_WORSKSHEET_NAME = "spreadsheet-master-list"
@@ -153,6 +154,18 @@ def lambda_handler(event, context):
     response = requests.post(UPDATE_PAGES_ENDPOINT, json=payload)
     if response.status_code != 200:
         slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the pages. Please try it manually later. :disappointed:')
+        print("Error msg sent to Slack")
+
+    # Update the adspixels sheet
+    payload = {
+        "spreadsheet_id" : spreadsheet_id,
+        "gs_access_token": gs_access_token,
+        "fb_access_token": fb_access_token,
+        "ad_account_id"  : ad_account_id
+    }
+    response = requests.post(UPDATE_ADSPIXELS_ENDPOINT, json=payload)
+    if response.status_code != 200:
+        slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the adspixels. Please try it manually later. :disappointed:')
         print("Error msg sent to Slack")
 
     # Add spreadsheet id to the master-list
