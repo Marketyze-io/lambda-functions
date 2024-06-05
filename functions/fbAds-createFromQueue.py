@@ -23,6 +23,7 @@ def lambda_handler(event, context):
     call_to_action  = event_params['call_to_action']
     link_url        = event_params['link_url']
     status          = event_params['status']
+    adspixel_id     = event_params['adspixel_id']
     spreadsheet_id  = event_params['spreadsheet_id']
     row_number      = event_params['row_number']
     gs_access_token = event_params['gs_access_token']
@@ -75,6 +76,7 @@ def lambda_handler(event, context):
         'creative': {
             'creative_id': creative_id,
         },
+        'tracking_specs': [{'action.type': 'offsite_conversion', 'fb_pixel': [adspixel_id]}],
         'status': status,
     }
 
