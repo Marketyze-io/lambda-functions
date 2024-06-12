@@ -51,7 +51,7 @@ def lambda_handler(event, context):
         }
     with open(f'{TEMP_FILE_PATH}{file_name}', 'wb') as f:
         shutil.copyfileobj(gd_file_response.raw, f)
-    print(f"File retrieved")
+    print("File retrieved")
 
     # Upload the file to Facebook
     fb_media_headers = {
@@ -89,7 +89,7 @@ def lambda_handler(event, context):
 
     # Delete the temporary file
     os.remove(f'{TEMP_FILE_PATH}{file_name}')
-    print(f"Temporary file deleted")
+    print("Temporary file deleted")
 
     # Send a success message to the SQS
     response = sqs.send_message(

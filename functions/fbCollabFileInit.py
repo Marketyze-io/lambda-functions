@@ -105,7 +105,7 @@ def lambda_handler(event, context):
         # Check for errors during sheet creation
         if gs_response.status_code != 200:
             print(gs_response.json())
-            slack_post_message(channel_id, token, f'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:')
+            slack_post_message(channel_id, token, 'Whoops! I couldn\'t duplicate one of the Rob worksheets. Please try again later :disappointed:')
             print("Error msg sent to Slack")
             return {
                 'statusCode': 500,
@@ -141,7 +141,7 @@ def lambda_handler(event, context):
     }
     response = requests.post(UPDATE_SAVED_AUDIENCES_ENDPOINT, json=payload)
     if response.status_code != 200:
-        slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the saved audiences. Please try it manually later. :disappointed:')
+        slack_post_message(channel_id, token, 'Whoops! I couldn\'t update the saved audiences. Please try it manually later. :disappointed:')
         print("Error msg sent to Slack")
 
     # Update the pages sheet
@@ -153,7 +153,7 @@ def lambda_handler(event, context):
     }
     response = requests.post(UPDATE_PAGES_ENDPOINT, json=payload)
     if response.status_code != 200:
-        slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the pages. Please try it manually later. :disappointed:')
+        slack_post_message(channel_id, token, 'Whoops! I couldn\'t update the pages. Please try it manually later. :disappointed:')
         print("Error msg sent to Slack")
 
     # Update the adspixels sheet
@@ -165,7 +165,7 @@ def lambda_handler(event, context):
     }
     response = requests.post(UPDATE_ADSPIXELS_ENDPOINT, json=payload)
     if response.status_code != 200:
-        slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the adspixels. Please try it manually later. :disappointed:')
+        slack_post_message(channel_id, token, 'Whoops! I couldn\'t update the adspixels. Please try it manually later. :disappointed:')
         print("Error msg sent to Slack")
 
     # Add spreadsheet id to the master-list
@@ -180,12 +180,12 @@ def lambda_handler(event, context):
           spreadsheet_id,
           datetime_now.strftime("%Y-%m-%d %H:%M:%S"),
         ]],
-      };
+      }
     gs_append_response = requests.post(gs_append_endpoint, json=gs_append_body)
 
       # Handle the error if the gs_append endpoint was not called successfully
     if gs_append_response.status_code != 200:
-        slack_post_message(channel_id, token, f'Whoops! I couldn\'t update the master list. Please contact one of the app maintainers. :disappointed:')
+        slack_post_message(channel_id, token, 'Whoops! I couldn\'t update the master list. Please contact one of the app maintainers. :disappointed:')
         print("Error msg sent to Slack")
     else:
         slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:\nFeel free to start working on the spreadsheet again :smile:")
