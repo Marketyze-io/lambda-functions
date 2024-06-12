@@ -18,7 +18,7 @@ GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-ADCOPIES_TABLE_RANGE = 'A3:K'
+ADCOPIES_TABLE_RANGE = 'A3:N'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
@@ -77,13 +77,19 @@ def lambda_handler(event, context):
 
     # Upload each piece of media to Facebook
     for adcopy in adcopies_table:
-        # Check if there is already a media hash
-        if adcopy[8] != '':
+        # Check if there is already a creative id
+        if adcopy[11] != '':
             print(f"Media hash already exists for {adcopy[1]}, skipping...")
             continue
 
-        media_type = adcopy[0]
-        media_link = adcopy[1]
+        media_type      = adcopy[0]
+        media_link      = adcopy[1]
+        caption         = adcopy[3]
+        message         = adcopy[4]
+        description     = adcopy[5]
+        call_to_action  = adcopy[6].upper().replace(" ", "_")
+        link_url        = adcopy[8]
+        page_id         = adcopy[12]
 
         if media_type == 'Carousel':
             # TODO: Implement carousel adcopy
@@ -104,6 +110,12 @@ def lambda_handler(event, context):
             'row_number': media_row_index,
             'spreadsheet_id': spreadsheet_id,
             'gs_access_token': gs_access_token,
+            'page_id': page_id,
+            'link_url': link_url,
+            'caption': caption,
+            'message': message,
+            'description': description,
+            'call_to_action': call_to_action
         }
 
         # Send a message to the SQS queue
