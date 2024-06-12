@@ -18,7 +18,7 @@ GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-ADCOPIES_TABLE_RANGE = 'A3:N'
+ADCOPIES_TABLE_RANGE = 'A3:M'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
@@ -84,12 +84,12 @@ def lambda_handler(event, context):
 
         media_type      = adcopy[0]
         media_link      = adcopy[1]
-        caption         = adcopy[3]
-        message         = adcopy[4]
-        description     = adcopy[5]
-        call_to_action  = adcopy[6].upper().replace(" ", "_")
-        link_url        = adcopy[8]
-        page_id         = adcopy[12]
+        caption         = adcopy[2]
+        headline        = adcopy[3]
+        description     = adcopy[4]
+        call_to_action  = adcopy[5].upper().replace(" ", "_")
+        link_url        = adcopy[7]
+        page_id         = adcopy[11]
 
         if media_type == 'Carousel':
             # TODO: Implement carousel adcopy
@@ -113,7 +113,7 @@ def lambda_handler(event, context):
             'page_id': page_id,
             'link_url': link_url,
             'caption': caption,
-            'message': message,
+            'headline': headline,
             'description': description,
             'call_to_action': call_to_action
         }

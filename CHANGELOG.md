@@ -4,9 +4,17 @@
 
 ## Added
 
+- Add support for uploading videos as ad media.
+- Add support for creating video ads.
+
 ## Removed
 
+- Removed the Rob_FB_Media sheet from use.
+
 ## Changed
+
+- Changed the table format in the FB Adcopies sheet to support video ads.
+- Moved the creation of Ad Creatives from fbAds functions to fbMedia functions.
 
 ## Fixed
 

@@ -14,7 +14,7 @@ GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-CREATIVES_NAME_COLUMN = 'J'
+CREATIVES_NAME_COLUMN = 'I'
 
 FB_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0'
 
@@ -73,7 +73,7 @@ def upload_video_media(file_name, ad_account_id, fb_access_token):
     print(f"Video ID: {video_id}")
     return video_id
 
-def create_ad_image_creative(name, page_id, media_hash, link_url, caption, message, description, call_to_action, ad_account_id, fb_access_token):
+def create_ad_image_creative(name, page_id, media_hash, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token):
     # Prepare Ad Image Creative payload
     payload = {
         'access_token': fb_access_token,
@@ -89,8 +89,8 @@ def create_ad_image_creative(name, page_id, media_hash, link_url, caption, messa
                 },
                 'image_hash': media_hash,
                 'link': link_url,
-                'name': caption,
-                'message': message,
+                'name': headline,
+                'message': caption,
                 'description': description
             }
         },
@@ -113,7 +113,7 @@ def create_ad_image_creative(name, page_id, media_hash, link_url, caption, messa
     creative_id = ad_creatives_response["id"]
     return creative_id
 
-def create_ad_video_creative(name, page_id, video_id, thumbnail_url, link_url, caption, message, description, call_to_action, ad_account_id, fb_access_token):
+def create_ad_video_creative(name, page_id, video_id, thumbnail_url, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token):
     # Prepare Ad Video Creative payload
     payload = {
         'access_token': fb_access_token,
@@ -128,7 +128,10 @@ def create_ad_video_creative(name, page_id, video_id, thumbnail_url, link_url, c
                     }
                 },
                 'video_id': video_id,
-                'image_url': thumbnail_url
+                'image_url': thumbnail_url,
+                'title': headline,
+                'message': caption,
+                'link_description': description
             }
         },
         'degrees_of_freedom_spec': {
@@ -175,7 +178,7 @@ def lambda_handler(event, context):
     page_id         = event_params['page_id']
     link_url        = event_params['link_url']
     caption         = event_params['caption']
-    message         = event_params['message']
+    headline        = event_params['headline']
     description     = event_params['description']
     call_to_action  = event_params['call_to_action']
 
@@ -200,10 +203,10 @@ def lambda_handler(event, context):
     # Upload the file to Facebook
     if FILE_TYPES[file_extension] == 'IMAGE':
         media_hash  = upload_image_media(file_name, ad_account_id, fb_access_token)
-        creative_id = create_ad_image_creative(file_name, page_id, media_hash, link_url, caption, message, description, call_to_action, ad_account_id, fb_access_token)
+        creative_id = create_ad_image_creative(file_name, page_id, media_hash, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token)
     elif FILE_TYPES[file_extension] == 'VIDEO':
         media_hash  = upload_video_media(file_name, ad_account_id, fb_access_token)
-        creative_id = create_ad_video_creative(file_name, page_id, media_hash, thumbnail_link, link_url, caption, message, description, call_to_action, ad_account_id, fb_access_token)
+        creative_id = create_ad_video_creative(file_name, page_id, media_hash, thumbnail_link, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token)
     else:
         print("Invalid file type")
         return {
