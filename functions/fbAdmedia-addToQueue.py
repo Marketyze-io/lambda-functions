@@ -15,9 +15,10 @@ LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdmedia-chec
 ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdmedia-checkStatus"
 
 GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
-GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
+GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
+ADCOPIES_TABLE_RANGE = 'A3:K'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
@@ -67,28 +68,33 @@ def lambda_handler(event, context):
     print("Ack sent to Slack")
 
     # Get the column of google drive media links
-    media_links_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!A3:B?access_token={gs_access_token}"
-    gs_response = requests.get(media_links_endpoint)
+    adcopies_table_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}/{spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!{ADCOPIES_TABLE_RANGE}?access_token={gs_access_token}"
+    gs_response = requests.get(adcopies_table_endpoint)
     print(gs_response.json())
-    media_links = gs_response.json()['values']
-    print("Media links retrieved from Google Sheets")
-    print(media_links)
+    adcopies_table = gs_response.json()['values']
+    print("Adcopies table retrieved from Google Sheets")
+    print(adcopies_table)
 
     # Upload each piece of media to Facebook
-    for link in media_links:
+    for adcopy in adcopies_table:
         # Check if there is already a media hash
-        if link[0] != '':
-            print(f"Media hash already exists for {link[1]}, skipping...")
+        if adcopy[8] != '':
+            print(f"Media hash already exists for {adcopy[1]}, skipping...")
             continue
 
-        media_link = link[1]
+        media_type = adcopy[0]
+        media_link = adcopy[1]
+
+        if media_type == 'Carousel':
+            # TODO: Implement carousel adcopy
+            print(f"Skipping carousel adcopy for {media_link}")
+            continue
 
         # Extract the file id from the URL
         file_id = media_link.split('/')[-2]
-        print(f"Uploading media for {file_id}")
 
-        # Get the row index of the media link
-        media_row_index = media_links.index(['', media_link]) + 3
+        # Get the row index of the adcopy
+        media_row_index = adcopies_table.index(adcopy) + 3
         print(f"Media row index: {media_row_index}")
 
         payload = {
