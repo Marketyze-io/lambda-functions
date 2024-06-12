@@ -67,7 +67,7 @@ def lambda_handler(event, context):
     gs_creatives_count = int(gs_creatives_count_response.json()['values'][0][0])
     print(f"Number of rows in Google Sheets: {gs_creatives_count}")
     row_num = str(int(gs_creatives_count) + 2)
-    gs_creatives_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!A3:P{row_num}?access_token={gs_access_token}"
+    gs_creatives_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!A3:R{row_num}?access_token={gs_access_token}"
     print("Getting data from Google Sheets")
     gs_creatives_response = requests.get(gs_creatives_endpoint)
     if gs_creatives_response.status_code != 200:
