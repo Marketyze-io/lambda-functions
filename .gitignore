@@ -1,3 +1,4 @@
 lambda_venv/
 venvs/
-requirements.txt
+mypy.ini
+ruff.toml
