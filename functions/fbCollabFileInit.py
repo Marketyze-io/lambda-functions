@@ -20,7 +20,7 @@ CAMPAIGNS_SHEET = {'name': '🤖Rob_FB_Campaigns', 'id': '987478379'}
 ADSETS_SHEET = {'name': '🤖Rob_FB_Adsets', 'id': '655550453'}
 ADS_SHEET = {'name': '🤖Rob_FB_Ads', 'id': '224614968'}
 AUDIENCES_SHEET = {'name': '🤖Rob_FB_Audiences', 'id': '862287605'}
-MEDIA_SHEET = {'name': '🤖Rob_FB_Media', 'id': '1547157615'}
+CREATIVES_SHEET = {'name': '🤖Rob_FB_Creatives', 'id': '1547157615'}
 PAGES_SHEET = {'name': '🤖Rob_FB_Pages', 'id': '1337036354'}
 
 TARGETING_SPEC_FORMULA_CELL = "N3"
@@ -72,17 +72,12 @@ def lambda_handler(event, context):
         ADSETS_SHEET['name']: ADSETS_SHEET['id'],
         ADS_SHEET['name']: ADS_SHEET['id'],
         AUDIENCES_SHEET['name']: AUDIENCES_SHEET['id'],
-        MEDIA_SHEET['name']: MEDIA_SHEET['id'],
+        CREATIVES_SHEET['name']: CREATIVES_SHEET['id'],
         PAGES_SHEET['name']: PAGES_SHEET['id']
     }
     gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
     gs_response = requests.get(gs_endpoint)
     gs_sheets = gs_response.json()['sheets']
-
-    # Payload for fixing the broken references
-    refs_payload = {
-        "requests": []
-    }
 
     # Check if the sheet already exists, then remove it from the master list
     for sheet in gs_sheets:

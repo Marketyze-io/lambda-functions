@@ -17,7 +17,7 @@ ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdmedia-checkStatus"
 GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
-MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
+CREATIVES_SHEET_NAME = '🤖Rob_FB_Creatives'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 

@@ -13,7 +13,7 @@ SUCCESS_QUEUE_URL = 'https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdm
 GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
-MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
+CREATIVES_SHEET_NAME = '🤖Rob_FB_Creatives'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
@@ -72,7 +72,7 @@ def lambda_handler(event, context):
     media_update_payload = {
         'values': [[media_thumbnail, file_name, media_hash]]
     }
-    media_update_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{MEDIA_SHEET_NAME}!A3:C3:append?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
+    media_update_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!A3:C3:append?valueInputOption=USER_ENTERED&access_token={gs_access_token}"
     media_update_request = requests.post(media_update_endpoint, json=media_update_payload)
     print(media_update_request.json())
 
@@ -99,6 +99,8 @@ def lambda_handler(event, context):
             'row_number': row_number
         })
     )
+
+    print(f'Success message sent to SQS: {response}')
 
     return {
         'statusCode': 200
