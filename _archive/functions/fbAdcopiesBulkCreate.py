@@ -14,7 +14,7 @@ CAMPAIGNS_SHEET = {'name': '🤖Rob_FB_Campaigns'}
 ADSETS_SHEET = {'name': '🤖Rob_FB_Adsets'}
 ADCOPIES_SHEET = {'name': '🤖Rob_FB_Adcopies'}
 AUDIENCES_SHEET = {'name': '🤖Rob_FB_Audiences'}
-MEDIA_SHEET = {'name': '🤖Rob_FB_Media'}
+CREATIVES_SHEET = {'name': '🤖Rob_FB_Creatives'}
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
