@@ -150,7 +150,7 @@ def lambda_handler(event, context):
         response = sqs.send_message(
             QueueUrl=SQS_QUEUE_URL,
             MessageBody=json.dumps(payload),
-            MessageGroupId=f'carousel-{name}'
+            MessageGroupId=f'carousel-{name.replace(" ", "_")}'
         )
         print(f'Carousel creation message sent to SQS: {response}')
 
