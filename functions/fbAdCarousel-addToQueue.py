@@ -89,6 +89,10 @@ def lambda_handler(event, context):
             print(f"Creative ID already exists for {carousel[0]}, skipping...")
             continue
 
+        if carousel[0] == '':
+            print("Empty row, skipping...")
+            continue
+
         name    = carousel[0]
         message = carousel[1]
         link    = carousel[2]
@@ -97,6 +101,8 @@ def lambda_handler(event, context):
         page_id = carousel[25]
 
         for item in media:
+            if item == '':
+                continue
             split_string = item.split(',')
             file_extension = split_string[0].split('.')[-1]
             if FILE_TYPES[file_extension] == 'IMAGE':
@@ -193,7 +199,7 @@ def lambda_handler(event, context):
     # Send a summary of the results to the user in Slack
     timer_local = datetime_timer + datetime.timedelta(hours=7)
     print("Sending summary to Slack")
-    slack_post_message(channel_id, token, f':hand: {carousels_created} pieces of admedia have been queued for creation! :hand:')
+    slack_post_message(channel_id, token, f':hand: {carousels_created} carousels have been queued for creation! :hand:')
     slack_post_message(channel_id, token, f':hourglass_flowing_sand: I\'ll get back to you at around {timer_local.strftime("%H:%M")} :hourglass_flowing_sand:')
     print("Summary sent to Slack")
 
