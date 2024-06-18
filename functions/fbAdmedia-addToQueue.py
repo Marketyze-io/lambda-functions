@@ -135,7 +135,7 @@ def lambda_handler(event, context):
 
         payload = {
             'ad_account_id': ad_account_id,
-            'access_token': fb_access_token,
+            'fb_access_token': fb_access_token,
             'spreadsheet_id': spreadsheet_id,
             'gs_access_token': gs_access_token,            
             'row_number': media_row_index,
