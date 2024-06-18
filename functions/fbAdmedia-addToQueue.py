@@ -10,8 +10,7 @@ import requests
 AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/"
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
-SQS_ADMEDIA_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCreation.fifo"
-SQS_ADCAROUSEL_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCarouselCreation.fifo"
+SQS_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCreation.fifo"
 LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdmedia-checkStatus"
 ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdmedia-checkStatus"
 
@@ -19,7 +18,7 @@ GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-ADCOPIES_TABLE_RANGE = 'A2:M'
+ADCOPIES_TABLE_RANGE = 'A3:M'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
@@ -27,12 +26,6 @@ SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
 TIMEOUT = 30
 CONCURRENCY = 10
-
-def get_dict_index(array, key, value):
-    for i in range(len(array)):
-        if array[i][key] == value:
-            return i
-    return -1
 
 def slack_post_message(channel_id, token, message):
     slack_payload = {
@@ -82,21 +75,14 @@ def lambda_handler(event, context):
     print("Adcopies table retrieved from Google Sheets")
     print(adcopies_table)
 
-    carousels = [
-        {
-            'id': 'carousel1',
-            'media': []
-        }
-    ]
-
     # Upload each piece of media to Facebook
-    for adcopy in adcopies_table[1:]:
+    for adcopy in adcopies_table:
         # Check if there is already a creative id
-        if adcopy[9] != '':
+        if adcopy[11] != '':
             print(f"Media hash already exists for {adcopy[1]}, skipping...")
             continue
 
-        carousel        = adcopy[0]
+        media_type      = adcopy[0]
         media_link      = adcopy[1]
         caption         = adcopy[2]
         headline        = adcopy[3]
@@ -105,6 +91,11 @@ def lambda_handler(event, context):
         link_url        = adcopy[7]
         page_id         = adcopy[11]
 
+        if media_type == 'Carousel':
+            # TODO: Implement carousel adcopy
+            print(f"Skipping carousel adcopy for {media_link}")
+            continue
+
         # Extract the file id from the URL
         file_id = media_link.split('/')[-2]
 
@@ -112,35 +103,13 @@ def lambda_handler(event, context):
         media_row_index = adcopies_table.index(adcopy) + 3
         print(f"Media row index: {media_row_index}")
 
-        if carousel != '':
-            index = get_dict_index(carousels, 'id', carousel)
-            # Create a new carousel if it doesn't exist
-            if index == -1:
-                carousels.append({
-                    'id': carousel,
-                    'media': []
-                })
-                index = len(carousels) - 1
-            # Append the media to the carousel
-            carousels[index]['media'].append({
-                'file_id': file_id,
-                'page_id': page_id,
-                'link_url': link_url,
-                'caption': caption,
-                'headline': headline,
-                'description': description,
-                'call_to_action': call_to_action
-            })
-            continue
-
         payload = {
-            'ad_account_id': ad_account_id,
-            'fb_access_token': fb_access_token,
-            'spreadsheet_id': spreadsheet_id,
-            'gs_access_token': gs_access_token,            
-            'row_number': media_row_index,
-            'carousel': carousel,
             'file_id': file_id,
+            'ad_account_id': ad_account_id,
+            'access_token': fb_access_token,
+            'row_number': media_row_index,
+            'spreadsheet_id': spreadsheet_id,
+            'gs_access_token': gs_access_token,
             'page_id': page_id,
             'link_url': link_url,
             'caption': caption,
@@ -151,31 +120,9 @@ def lambda_handler(event, context):
 
         # Send a message to the SQS queue
         response = sqs.send_message(
-            QueueUrl=SQS_ADMEDIA_QUEUE_URL,
+            QueueUrl=SQS_QUEUE_URL,
             MessageBody=json.dumps(payload),
             MessageGroupId=f'admedia-{file_id}'
-        )
-        print(f'Media upload message sent to SQS: {response}')
-
-        admedia_created += 1
-
-    for carousel in carousels:
-        if len(carousel['media']) == 0:
-            continue
-
-        payload = {
-            'ad_account_id': ad_account_id,
-            'access_token': fb_access_token,
-            'spreadsheet_id': spreadsheet_id,
-            'gs_access_token': gs_access_token,
-            'carousel': carousel
-        }
-
-        # Send a message to the SQS queue
-        response = sqs.send_message(
-            QueueUrl=SQS_ADCAROUSEL_QUEUE_URL,
-            MessageBody=json.dumps(payload),
-            MessageGroupId=f'admedia-{carousel["id"]}'
         )
         print(f'Media upload message sent to SQS: {response}')
 
