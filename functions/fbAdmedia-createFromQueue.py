@@ -100,6 +100,7 @@ def lambda_handler(event, context):
     headline        = event_params['headline']
     description     = event_params['description']
     call_to_action  = event_params['call_to_action']
+    carousel        = event_params['carousel']
 
     sqs = boto3.client('sqs', region_name='ap-southeast-1')
 
@@ -125,7 +126,7 @@ def lambda_handler(event, context):
     elif FILE_TYPES[file_extension] == 'VIDEO':
         media_hash  = upload_video_media(file_name, ad_account_id, fb_access_token)
     else:
-        print("Invalid file type")
+        print(f"Invalid file type: {file_extension}")
         return {
             'statusCode': 400
         }
@@ -141,8 +142,15 @@ def lambda_handler(event, context):
     response = sqs.send_message(
         QueueUrl=SUCCESS_QUEUE_URL,
         MessageBody=json.dumps({
+            'ad_account_id': ad_account_id,
+            'fb_access_token': fb_access_token,
+            'row_number': row_number,
+            'spreadsheet_id': spreadsheet_id,
+            'gs_access_token': gs_access_token,
             'file_name': file_name,
             'file_id': file_id,
+            'file_type': FILE_TYPES[file_extension],
+            'carousel': carousel,
             'row_number': row_number,
             'media_hash': media_hash,
             'page_id': page_id,
