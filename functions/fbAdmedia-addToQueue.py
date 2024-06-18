@@ -82,7 +82,7 @@ def lambda_handler(event, context):
             print(f"Media hash already exists for {adcopy[1]}, skipping...")
             continue
 
-        media_type      = adcopy[0]
+        carousel        = adcopy[0]
         media_link      = adcopy[1]
         caption         = adcopy[2]
         headline        = adcopy[3]
@@ -90,11 +90,6 @@ def lambda_handler(event, context):
         call_to_action  = adcopy[5].upper().replace(" ", "_")
         link_url        = adcopy[7]
         page_id         = adcopy[11]
-
-        if media_type == 'Carousel':
-            # TODO: Implement carousel adcopy
-            print(f"Skipping carousel adcopy for {media_link}")
-            continue
 
         # Extract the file id from the URL
         file_id = media_link.split('/')[-2]
@@ -104,12 +99,13 @@ def lambda_handler(event, context):
         print(f"Media row index: {media_row_index}")
 
         payload = {
-            'file_id': file_id,
             'ad_account_id': ad_account_id,
             'access_token': fb_access_token,
-            'row_number': media_row_index,
             'spreadsheet_id': spreadsheet_id,
-            'gs_access_token': gs_access_token,
+            'gs_access_token': gs_access_token,            
+            'row_number': media_row_index,
+            'carousel': carousel,
+            'file_id': file_id,
             'page_id': page_id,
             'link_url': link_url,
             'caption': caption,
