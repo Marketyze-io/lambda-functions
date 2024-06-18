@@ -19,7 +19,7 @@ GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-ADCOPIES_TABLE_RANGE = 'A3:M'
+ADCOPIES_TABLE_RANGE = 'A2:M'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
@@ -90,7 +90,7 @@ def lambda_handler(event, context):
     ]
 
     # Upload each piece of media to Facebook
-    for adcopy in adcopies_table:
+    for adcopy in adcopies_table[1:]:
         # Check if there is already a creative id
         if adcopy[11] != '':
             print(f"Media hash already exists for {adcopy[1]}, skipping...")
