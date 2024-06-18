@@ -78,23 +78,17 @@ def lambda_handler(event, context):
     # Upload each piece of media to Facebook
     for adcopy in adcopies_table:
         # Check if there is already a creative id
-        if adcopy[11] != '':
+        if adcopy[8] != '':
             print(f"Media hash already exists for {adcopy[1]}, skipping...")
             continue
 
-        media_type      = adcopy[0]
-        media_link      = adcopy[1]
-        caption         = adcopy[2]
-        headline        = adcopy[3]
-        description     = adcopy[4]
-        call_to_action  = adcopy[5].upper().replace(" ", "_")
-        link_url        = adcopy[7]
-        page_id         = adcopy[11]
-
-        if media_type == 'Carousel':
-            # TODO: Implement carousel adcopy
-            print(f"Skipping carousel adcopy for {media_link}")
-            continue
+        media_link      = adcopy[0]
+        caption         = adcopy[1]
+        headline        = adcopy[2]
+        description     = adcopy[3]
+        call_to_action  = adcopy[4].upper().replace(" ", "_")
+        link_url        = adcopy[6]
+        page_id         = adcopy[10]
 
         # Extract the file id from the URL
         file_id = media_link.split('/')[-2]
