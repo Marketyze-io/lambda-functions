@@ -13,7 +13,8 @@ SUCCESS_QUEUE_URL = 'https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdm
 GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
-MEDIA_HASH_COLUMN = 'J'
+MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
+CREATIVES_NAME_COLUMN = 'H'
 
 FB_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0'
 
@@ -72,14 +73,94 @@ def upload_video_media(file_name, ad_account_id, fb_access_token):
     print(f"Video ID: {video_id}")
     return video_id
 
-def update_adcopy_table(media_hash, spreadsheet_id, gs_access_token, row_number):
-    media_hash_range = f"{CREATIVES_SHEET_NAME}!{MEDIA_HASH_COLUMN}{row_number}"
+def create_ad_image_creative(name, page_id, media_hash, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token):
+    # Prepare Ad Image Creative payload
+    payload = {
+        'access_token': fb_access_token,
+        'name': name,
+        'object_story_spec': {
+            'page_id'  :page_id,
+            'link_data': {
+                'call_to_action': {
+                    'type': call_to_action,
+                    'value': {
+                        'link': link_url
+                    }
+                },
+                'image_hash': media_hash,
+                'link': link_url,
+                'name': headline,
+                'message': caption,
+                'description': description
+            }
+        },
+        'degrees_of_freedom_spec': {
+            'creative_features_spec': {
+                'standard_enhancements': {
+                    'enroll_status': 'OPT_OUT'
+                }
+            }
+        },
+        'url_tags': URL_TAGS
+    }
+
+    # Create Ad Image Creative
+    ad_creatives_endpoint = f'{FB_ROOT_ENDPOINT}/{ad_account_id}/adcreatives'
+    ad_creatives_response = requests.post(ad_creatives_endpoint, json=payload)
+    ad_creatives_response = ad_creatives_response.json()
+
+    print(ad_creatives_response)
+    creative_id = ad_creatives_response["id"]
+    return creative_id
+
+def create_ad_video_creative(name, page_id, video_id, thumbnail_url, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token):
+    # Prepare Ad Video Creative payload
+    payload = {
+        'access_token': fb_access_token,
+        'name': name,
+        'object_story_spec': {
+            'page_id'  :page_id,
+            'video_data': {
+                'call_to_action': {
+                    'type': call_to_action,
+                    'value': {
+                        'link': link_url
+                    }
+                },
+                'video_id': video_id,
+                'image_url': thumbnail_url,
+                'title': headline,
+                'message': caption,
+                'link_description': description
+            }
+        },
+        'degrees_of_freedom_spec': {
+            'creative_features_spec': {
+                'standard_enhancements': {
+                    'enroll_status': 'OPT_OUT'
+                }
+            }
+        },
+        'url_tags': URL_TAGS
+    }
+
+    # Create Ad Image Creative
+    ad_creatives_endpoint = f'{FB_ROOT_ENDPOINT}/{ad_account_id}/adcreatives'
+    ad_creatives_response = requests.post(ad_creatives_endpoint, json=payload)
+    ad_creatives_response = ad_creatives_response.json()
+
+    print(ad_creatives_response)
+    creative_id = ad_creatives_response["id"]
+    return creative_id
+
+def update_adcopy_table(file_name, media_hash, creative_id, spreadsheet_id, gs_access_token, row_number):
+    media_hash_range = f"{CREATIVES_SHEET_NAME}!{CREATIVES_NAME_COLUMN}{row_number}"
     media_hash_update_headers = {
         'Authorization': f'Bearer {gs_access_token}'
     }
     media_hash_update_payload = {
         'range': media_hash_range,
-        'values': [[media_hash]]
+        'values': [[file_name, media_hash, creative_id]]
     }
     media_hash_update_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}/{spreadsheet_id}/values/{media_hash_range}?valueInputOption=USER_ENTERED"
     media_hash_update_request = requests.put(media_hash_update_endpoint, headers=media_hash_update_headers, json=media_hash_update_payload)
@@ -100,7 +181,6 @@ def lambda_handler(event, context):
     headline        = event_params['headline']
     description     = event_params['description']
     call_to_action  = event_params['call_to_action']
-    carousel        = event_params['carousel']
 
     sqs = boto3.client('sqs', region_name='ap-southeast-1')
 
@@ -123,16 +203,18 @@ def lambda_handler(event, context):
     # Upload the file to Facebook
     if FILE_TYPES[file_extension] == 'IMAGE':
         media_hash  = upload_image_media(file_name, ad_account_id, fb_access_token)
+        creative_id = create_ad_image_creative(file_name, page_id, media_hash, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token)
     elif FILE_TYPES[file_extension] == 'VIDEO':
         media_hash  = upload_video_media(file_name, ad_account_id, fb_access_token)
+        creative_id = create_ad_video_creative(file_name, page_id, media_hash, thumbnail_link, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token)
     else:
-        print(f"Invalid file type: {file_extension}")
+        print("Invalid file type")
         return {
             'statusCode': 400
         }
 
     # Update the media hash in the creatives sheet
-    update_adcopy_table(media_hash, spreadsheet_id, gs_access_token, row_number)
+    update_adcopy_table(file_name, media_hash, creative_id, spreadsheet_id, gs_access_token, row_number)
 
     # Delete the temporary file
     os.remove(f'{TEMP_FILE_PATH}/{file_name}')
@@ -142,23 +224,8 @@ def lambda_handler(event, context):
     response = sqs.send_message(
         QueueUrl=SUCCESS_QUEUE_URL,
         MessageBody=json.dumps({
-            'ad_account_id': ad_account_id,
-            'fb_access_token': fb_access_token,
-            'row_number': row_number,
-            'spreadsheet_id': spreadsheet_id,
-            'gs_access_token': gs_access_token,
-            'file_name': file_name,
             'file_id': file_id,
-            'file_type': FILE_TYPES[file_extension],
-            'carousel': carousel,
-            'row_number': row_number,
-            'media_hash': media_hash,
-            'page_id': page_id,
-            'link_url': link_url,
-            'caption': caption,
-            'headline': headline,
-            'description': description,
-            'call_to_action': call_to_action
+            'row_number': row_number
         })
     )
 
