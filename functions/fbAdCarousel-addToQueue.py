@@ -18,7 +18,7 @@ GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CAROUSELS_SHEET_NAME = '📝 FB Carousels'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-CAROUSELS_TABLE_RANGE = 'A3:Z'
+CAROUSELS_TABLE_RANGE = 'A3:AB'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
@@ -56,10 +56,10 @@ def get_aws_secret(secret_name):
 
 def lambda_handler(event, context):
     channel_id      = event['channel_id']
-    gs_access_token = event['gs_access_token']
-    spreadsheet_id  = event['spreadsheet_id']
     fb_access_token = event['fb_access_token']
     ad_account_id   = event['ad_account_id']
+    gs_access_token = event['gs_access_token']
+    spreadsheet_id  = event['spreadsheet_id']
     ad_account_name = event['ad_account_name']
 
     carousels_created = 0
@@ -85,7 +85,7 @@ def lambda_handler(event, context):
     # Create each carousel
     for carousel in carousels_table:
         # Check if there is already a creative id
-        if carousel[25] != '':
+        if carousel[26] != '':
             print(f"Creative ID already exists for {carousel[0]}, skipping...")
             continue
 
@@ -93,7 +93,8 @@ def lambda_handler(event, context):
         message = carousel[1]
         link    = carousel[2]
         caption = carousel[3]
-        media   = carousel[14:23]
+        media   = carousel[15:24]
+        page_id = carousel[25]
 
         for item in media:
             split_string = item.split(',')
@@ -122,6 +123,13 @@ def lambda_handler(event, context):
                 continue
 
         payload = {
+            'fb_access_token': fb_access_token,
+            'ad_account_id': ad_account_id,
+            'gs_access_token': gs_access_token,
+            'spreadsheet_id': spreadsheet_id,
+            'row_number': carousels_table.index(carousel) + 3,
+            'carousel_name': name,
+            'page_id': page_id,
             'message': message,
             'link': link,
             'caption': caption,
