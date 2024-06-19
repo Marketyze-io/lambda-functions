@@ -180,10 +180,10 @@ def lambda_handler(event, context):
     else:
         datetime_timer = datetime_now + datetime.timedelta(minutes=timer_minutes+1) - datetime.timedelta(seconds=datetime_now.second)
     
-    # Create a scheduled event to check the status of the admedia
+    # Create a scheduled event to check the status of the carousels
     response = scheduler.create_schedule(
         ActionAfterCompletion='DELETE',
-        Description='Check the status of the admedia created',
+        Description='Check the status of the carousels created',
         FlexibleTimeWindow={
             'Mode': 'OFF'
         },
@@ -193,7 +193,7 @@ def lambda_handler(event, context):
             'Arn': LAMBDA_ARN,
             'Input': json.dumps({
                 'channel_id': channel_id,
-                'admedia_queued': carousels_created
+                'carousels_queued': carousels_created
             }),
             'RoleArn': ROLE_ARN,
         }
