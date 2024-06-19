@@ -207,6 +207,7 @@ def lambda_handler(event, context):
     elif FILE_TYPES[file_extension] == 'VIDEO':
         media_hash  = upload_video_media(file_name, ad_account_id, fb_access_token)
         creative_id = create_ad_video_creative(file_name, page_id, media_hash, thumbnail_link, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token)
+        media_hash = f'{media_hash};{thumbnail_link}'
     else:
         print("Invalid file type")
         return {

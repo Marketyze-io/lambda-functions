@@ -120,7 +120,8 @@ def lambda_handler(event, context):
                 child_attachments.append(item)
             elif FILE_TYPES[file_extension] == 'VIDEO':
                 item = {
-                    'video_id'     : split_string[1],
+                    'video_id'     : split_string[1].split(';')[0],
+                    'picture'      : split_string[1].split(';')[1],
                     'name'         : split_string[2],
                     'description'  : split_string[3],
                     'call_to_action': {
