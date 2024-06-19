@@ -10,19 +10,27 @@ import requests
 AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/"
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
-SQS_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCreation.fifo"
-LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdmedia-checkStatus"
+SQS_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCarouselCreation.fifo"
+LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdmediaCarousel-checkStatus"
 ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdmedia-checkStatus"
 
 GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
-CREATIVES_SHEET_NAME = '📝 FB Adcopies'
+CAROUSELS_SHEET_NAME = '📝 FB Carousels'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-ADCOPIES_TABLE_RANGE = 'A3:M'
+CAROUSELS_TABLE_RANGE = 'A3:AB'
 
 FACEBOOK_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
+
+FILE_TYPES = {
+    'png': 'IMAGE',
+    'jpg': 'IMAGE',
+    'jpeg': 'IMAGE',
+    'gif': 'IMAGE',
+    'mp4': 'VIDEO'
+}
 
 TIMEOUT = 30
 CONCURRENCY = 10
@@ -48,13 +56,13 @@ def get_aws_secret(secret_name):
 
 def lambda_handler(event, context):
     channel_id      = event['channel_id']
-    gs_access_token = event['gs_access_token']
-    spreadsheet_id  = event['spreadsheet_id']
     fb_access_token = event['fb_access_token']
     ad_account_id   = event['ad_account_id']
+    gs_access_token = event['gs_access_token']
+    spreadsheet_id  = event['spreadsheet_id']
     ad_account_name = event['ad_account_name']
 
-    admedia_created = 0
+    carousels_created = 0
     sqs = boto3.client('sqs', region_name='ap-southeast-1')
     scheduler = boto3.client('scheduler', region_name='ap-southeast-1')
 
@@ -63,72 +71,103 @@ def lambda_handler(event, context):
 
     # Send an ack to Slack
     print("Sending ack to Slack")
-    slack_post_message(channel_id, token, ':rocket: Starting bulk admedia upload! :rocket:')
-    slack_post_message(channel_id, token, f':robot_face: I\'m now uploading media to {ad_account_name} :robot_face:\nPlease don\'t do anything to the spreadsheet\nThis will take a few seconds...')
+    slack_post_message(channel_id, token, ':rocket: Starting carousel creation! :rocket:')
     print("Ack sent to Slack")
 
     # Get the column of google drive media links
-    adcopies_table_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}/{spreadsheet_id}/values/{CREATIVES_SHEET_NAME}!{ADCOPIES_TABLE_RANGE}?access_token={gs_access_token}"
-    gs_response = requests.get(adcopies_table_endpoint)
+    carousels_table_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}/{spreadsheet_id}/values/{CAROUSELS_SHEET_NAME}!{CAROUSELS_TABLE_RANGE}?access_token={gs_access_token}"
+    gs_response = requests.get(carousels_table_endpoint)
     print(gs_response.json())
-    adcopies_table = gs_response.json()['values']
-    print("Adcopies table retrieved from Google Sheets")
-    print(adcopies_table)
+    carousels_table = gs_response.json()['values']
+    print("Carousels table retrieved from Google Sheets")
+    print(carousels_table)
 
-    # Upload each piece of media to Facebook
-    for adcopy in adcopies_table:
+    # Create each carousel
+    for carousel in carousels_table:
         # Check if there is already a creative id
-        if adcopy[8] != '':
-            print(f"Media hash already exists for {adcopy[1]}, skipping...")
+        if carousel[26] != '':
+            print(f"Creative ID already exists for {carousel[0]}, skipping...")
             continue
 
-        media_link      = adcopy[0]
-        caption         = adcopy[1]
-        headline        = adcopy[2]
-        description     = adcopy[3]
-        call_to_action  = adcopy[4].upper().replace(" ", "_")
-        link_url        = adcopy[6]
-        page_id         = adcopy[10]
+        if carousel[0] == '':
+            print("Empty row, skipping...")
+            continue
 
-        # Extract the file id from the URL
-        file_id = media_link.split('/')[-2]
+        name    = carousel[0]
+        message = carousel[1]
+        link    = carousel[2]
+        caption = carousel[3]
+        media   = carousel[15:25]
+        page_id = carousel[25]
 
-        # Get the row index of the adcopy
-        media_row_index = adcopies_table.index(adcopy) + 3
-        print(f"Media row index: {media_row_index}")
+        child_attachments = []
+
+        for item in media:
+            if item == '':
+                continue
+            split_string = item.split(',')
+            file_extension = split_string[0].split('.')[-1]
+            if FILE_TYPES[file_extension] == 'IMAGE':
+                item = {
+                    'image_hash'    : split_string[1],
+                    'name'          : split_string[2],
+                    'description'   : split_string[3],
+                    'call_to_action': {
+                        'type': split_string[4].upper().replace(" ", "_")
+                    },
+                    'link'          : split_string[5]
+                }
+                child_attachments.append(item)
+            elif FILE_TYPES[file_extension] == 'VIDEO':
+                item = {
+                    'video_id'     : split_string[1].split(';')[0],
+                    'picture'      : split_string[1].split(';')[1],
+                    'name'         : split_string[2],
+                    'description'  : split_string[3],
+                    'call_to_action': {
+                        'type': split_string[4].upper().replace(" ", "_")
+                    },
+                    'link'         : split_string[5]
+                }
+                child_attachments.append(item)
+            else:
+                continue
 
         payload = {
-            'file_id': file_id,
+            'fb_access_token': fb_access_token,
             'ad_account_id': ad_account_id,
-            'access_token': fb_access_token,
-            'row_number': media_row_index,
-            'spreadsheet_id': spreadsheet_id,
             'gs_access_token': gs_access_token,
+            'spreadsheet_id': spreadsheet_id,
+            'row_number': carousels_table.index(carousel) + 3,
+            'carousel_name': name,
             'page_id': page_id,
-            'link_url': link_url,
+            'message': message,
+            'link': link,
             'caption': caption,
-            'headline': headline,
-            'description': description,
-            'call_to_action': call_to_action
+            'child_attachments': child_attachments
         }
+
+        # Get the row index of the adcopy
+        carousel_row_index = carousels_table.index(carousel) + 3
+        print(f"Carousel row index: {carousel_row_index}")
 
         # Send a message to the SQS queue
         response = sqs.send_message(
             QueueUrl=SQS_QUEUE_URL,
             MessageBody=json.dumps(payload),
-            MessageGroupId=f'admedia-{file_id}'
+            MessageGroupId=f'carousel-{name.replace(" ", "_")}'
         )
-        print(f'Media upload message sent to SQS: {response}')
+        print(f'Carousel creation message sent to SQS: {response}')
 
-        admedia_created += 1
+        carousels_created += 1
 
-    if admedia_created == 0:
-        slack_post_message(channel_id, token, f':question: No new media to upload for {ad_account_name} :question:')
+    if carousels_created == 0:
+        slack_post_message(channel_id, token, f':question: No carousels to create for {ad_account_name} :question:')
         return {
             'statusCode': 200
         }
     
-    timer_seconds_full = math.ceil(admedia_created / CONCURRENCY) * TIMEOUT
+    timer_seconds_full = math.ceil(carousels_created / CONCURRENCY) * TIMEOUT
     timer_seconds = timer_seconds_full % 60
     timer_minutes = timer_seconds_full // 60
 
@@ -141,10 +180,10 @@ def lambda_handler(event, context):
     else:
         datetime_timer = datetime_now + datetime.timedelta(minutes=timer_minutes+1) - datetime.timedelta(seconds=datetime_now.second)
     
-    # Create a scheduled event to check the status of the admedia
+    # Create a scheduled event to check the status of the carousels
     response = scheduler.create_schedule(
         ActionAfterCompletion='DELETE',
-        Description='Check the status of the admedia created',
+        Description='Check the status of the carousels created',
         FlexibleTimeWindow={
             'Mode': 'OFF'
         },
@@ -154,7 +193,7 @@ def lambda_handler(event, context):
             'Arn': LAMBDA_ARN,
             'Input': json.dumps({
                 'channel_id': channel_id,
-                'admedia_queued': admedia_created
+                'carousels_queued': carousels_created
             }),
             'RoleArn': ROLE_ARN,
         }
@@ -165,7 +204,7 @@ def lambda_handler(event, context):
     # Send a summary of the results to the user in Slack
     timer_local = datetime_timer + datetime.timedelta(hours=7)
     print("Sending summary to Slack")
-    slack_post_message(channel_id, token, f':hand: {admedia_created} pieces of admedia have been queued for creation! :hand:')
+    slack_post_message(channel_id, token, f':hand: {carousels_created} carousels have been queued for creation! :hand:')
     slack_post_message(channel_id, token, f':hourglass_flowing_sand: I\'ll get back to you at around {timer_local.strftime("%H:%M")} :hourglass_flowing_sand:')
     print("Summary sent to Slack")
 

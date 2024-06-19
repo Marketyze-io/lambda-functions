@@ -1,3 +1,23 @@
+# v1.2.0 - 19-Jun-2024
+
+## Milestones
+
+- Rob should be feature-complete now and will enter feature freeze. No further features will be added to Rob by Richard.
+- v1.2.0 will be the last major update to Rob by Richard.
+- All future updates will be bug fixes.
+
+## Added
+
+- Added support for creating carousel ads.
+
+## Changed
+
+- Separated dev and prod versions of addToQueue functions.
+    - Dev should be for testing new code.
+    - Prod should be what the growth team uses.
+- Changed the tables in the collab file template for hopefully the last time.
+    - Added a new table for carousel ads.
+
 # v1.1.0 - 12-Jun-2024
 
 ## Milestones
@@ -19,9 +39,3 @@
 ## Fixed
 
 - Fixed the bug in fbAds-addToQueue that caused Rob to crash when trying to create ads.
-
-## Known Issues
-
-- Deleting/resetting a collab file saved in Rob is not possible through Rob.
-- All previous versions of the collab file will not work with Rob anymore.
-- Rob currently cannot update existing collab files to the latest version. You need to make a new copy of the v4 template.

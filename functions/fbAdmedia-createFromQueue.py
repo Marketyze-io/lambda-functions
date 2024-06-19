@@ -14,7 +14,7 @@ GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
 CREATIVES_SHEET_NAME = '📝 FB Adcopies'
 MEDIA_SHEET_NAME = '🤖Rob_FB_Media'
-CREATIVES_NAME_COLUMN = 'I'
+CREATIVES_NAME_COLUMN = 'H'
 
 FB_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0'
 
@@ -207,6 +207,7 @@ def lambda_handler(event, context):
     elif FILE_TYPES[file_extension] == 'VIDEO':
         media_hash  = upload_video_media(file_name, ad_account_id, fb_access_token)
         creative_id = create_ad_video_creative(file_name, page_id, media_hash, thumbnail_link, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token)
+        media_hash = f'{media_hash};{thumbnail_link}'
     else:
         print("Invalid file type")
         return {
