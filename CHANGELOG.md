@@ -12,7 +12,7 @@
 
 ## Changed
 
-- Separated dev and prod versions of Rob.
+- Separated dev and prod versions of addToQueue functions.
     - Dev should be for testing new code.
     - Prod should be what the growth team uses.
 - Changed the tables in the collab file template for hopefully the last time.
