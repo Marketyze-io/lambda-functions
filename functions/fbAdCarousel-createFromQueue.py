@@ -6,7 +6,7 @@ FB_ROOT_ENDPOINT = 'https://graph.facebook.com/v19.0/'
 
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets/'
 GOOGLE_SHEETS_SHEET_NAME = '📝 FB Carousels'
-CAROUSEL_ID_COLUMN = 'Y'
+CAROUSEL_ID_COLUMN = 'AA'
 
 SUCCESS_QUEUE_URL = 'https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCarousel-successfulInvocation'
 
@@ -39,12 +39,16 @@ def create_carousel_creative(name, page_id, message, link, caption, child_attach
         'url_tags': URL_TAGS
     }
 
+    print(payload)
+
     # Create Carousel Creative
     ad_creatives_endpoint = f'{FB_ROOT_ENDPOINT}/{ad_account_id}/adcreatives'
-    ad_creatives_response = requests.post(ad_creatives_endpoint, json=payload)
+    ad_creatives_response = requests.post(ad_creatives_endpoint, json=payload, headers=fb_headers)
     ad_creatives_response = ad_creatives_response.json()
 
     print(ad_creatives_response)
+    if 'error' in ad_creatives_response:
+        return ad_creatives_response
     creative_id = ad_creatives_response["id"]
     return creative_id
 
@@ -73,7 +77,12 @@ def lambda_handler(event, context):
         child_attachments=child_attachments,
         ad_account_id=ad_account_id,
         fb_access_token=fb_access_token
-    ) 
+    )
+    if 'error' in carousel_creative_id:
+        return {
+            'statusCode': 400,
+            'body': carousel_creative_id
+        }
 
     # Update the Google Sheets row with the creative ID
     gs_update_endpoint = f"{GOOGLE_SHEETS_ROOT_URL}{spreadsheet_id}/values/{GOOGLE_SHEETS_SHEET_NAME}!{CAROUSEL_ID_COLUMN}{row_number}?valueInputOption=USER_ENTERED&access_token={gs_access_token}"

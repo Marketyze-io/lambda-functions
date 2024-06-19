@@ -97,8 +97,10 @@ def lambda_handler(event, context):
         message = carousel[1]
         link    = carousel[2]
         caption = carousel[3]
-        media   = carousel[15:24]
+        media   = carousel[15:25]
         page_id = carousel[25]
+
+        child_attachments = []
 
         for item in media:
             if item == '':
@@ -115,6 +117,7 @@ def lambda_handler(event, context):
                     },
                     'link'          : split_string[5]
                 }
+                child_attachments.append(item)
             elif FILE_TYPES[file_extension] == 'VIDEO':
                 item = {
                     'video_id'     : split_string[1],
@@ -125,6 +128,7 @@ def lambda_handler(event, context):
                     },
                     'link'         : split_string[5]
                 }
+                child_attachments.append(item)
             else:
                 continue
 
@@ -139,7 +143,7 @@ def lambda_handler(event, context):
             'message': message,
             'link': link,
             'caption': caption,
-            'child_attachments': media
+            'child_attachments': child_attachments
         }
 
         # Get the row index of the adcopy
