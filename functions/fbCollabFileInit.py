@@ -20,8 +20,9 @@ CAMPAIGNS_SHEET = {'name': '🤖Rob_FB_Campaigns', 'id': '987478379'}
 ADSETS_SHEET = {'name': '🤖Rob_FB_Adsets', 'id': '655550453'}
 ADS_SHEET = {'name': '🤖Rob_FB_Ads', 'id': '224614968'}
 AUDIENCES_SHEET = {'name': '🤖Rob_FB_Audiences', 'id': '862287605'}
-MEDIA_SHEET = {'name': '🤖Rob_FB_Media', 'id': '1547157615'}
+CREATIVE_SHEET = {'name': '🤖Rob_FB_Creatives', 'id': '1547157615'}
 PAGES_SHEET = {'name': '🤖Rob_FB_Pages', 'id': '1337036354'}
+PIXELS_SHEET = {'name': '🤖Rob_FB_AdsPixels', 'id': '1148394659'}
 
 TARGETING_SPEC_FORMULA_CELL = "N3"
 CREATIVE_HASH_FORMULA_CELL = "N3"
@@ -72,8 +73,9 @@ def lambda_handler(event, context):
         ADSETS_SHEET['name']: ADSETS_SHEET['id'],
         ADS_SHEET['name']: ADS_SHEET['id'],
         AUDIENCES_SHEET['name']: AUDIENCES_SHEET['id'],
-        MEDIA_SHEET['name']: MEDIA_SHEET['id'],
-        PAGES_SHEET['name']: PAGES_SHEET['id']
+        CREATIVE_SHEET['name']: CREATIVE_SHEET['id'],
+        PAGES_SHEET['name']: PAGES_SHEET['id'],
+        PIXELS_SHEET['name']: PIXELS_SHEET['id']
     }
     gs_endpoint = f"{GOOGLE_SHEETS_ROOT_URL + spreadsheet_id}?access_token={gs_access_token}"
     gs_response = requests.get(gs_endpoint)
@@ -89,6 +91,7 @@ def lambda_handler(event, context):
             del master_sheet_ids[sheet_name]
         
     # Create the worksheets that don't exist
+    """
     for sheet_name in master_sheet_ids:
         sheet_id = master_sheet_ids[sheet_name]
         # Create the worksheet
@@ -126,6 +129,7 @@ def lambda_handler(event, context):
         new_sheet_ids[sheet_name] = new_sheet_id
 
     print(new_sheet_ids)
+    """
 
     # Update the saved audiences sheet
     payload = {
@@ -184,7 +188,7 @@ def lambda_handler(event, context):
         print("Error msg sent to Slack")
     else:
         slack_post_message(channel_id, token, f":tada: {spreadsheet_name} is now ready for use! :tada:\nFeel free to start working on the spreadsheet again :smile:")
-
+    
     return {
         'statusCode': 200
     }
