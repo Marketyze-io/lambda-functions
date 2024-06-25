@@ -1,3 +1,13 @@
+# v1.2.1 - 25-Jun-2024
+
+## Changed
+
+- Changed video thumbnails to be uploaded to facebook instead of using the google thumbnail link which was temporary.
+
+## Fixed
+
+- Fixed the carousels checkStatus function not triggering.
+
 # v1.2.0 - 19-Jun-2024
 
 ## Milestones
