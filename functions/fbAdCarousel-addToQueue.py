@@ -11,8 +11,8 @@ AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 SQS_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCarouselCreation.fifo"
-LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdmediaCarousel-checkStatus"
-ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdmedia-checkStatus"
+LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdCarousel-checkStatus"
+ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdCarousel-checkStatus"
 
 GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
