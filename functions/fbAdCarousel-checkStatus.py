@@ -8,7 +8,7 @@ import urllib.request
 AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/"
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
-SUCCESS_QUEUE_URL = 'https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdCarousel-successfulInvocation'
+SUCCESS_QUEUE_URL = 'https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCarousel-successfulInvocation'
 
 SLACK_POST_MESSAGE_ENDPOINT = 'https://slack.com/api/chat.postMessage'
 
