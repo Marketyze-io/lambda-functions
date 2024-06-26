@@ -11,8 +11,8 @@ AWS_PARAM_STORE_ENDPOINT = "http://localhost:2773/systemsmanager/parameters/get/
 SECRET_NAME = "/slack/fb-marketing/bot-oauth-token"
 aws_session_token = os.environ.get('AWS_SESSION_TOKEN')
 SQS_QUEUE_URL = "https://sqs.ap-southeast-1.amazonaws.com/533267173231/fbAdmediaCarouselCreation.fifo"
-LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdmediaCarousel-checkStatus"
-ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdmedia-checkStatus"
+LAMBDA_ARN = "arn:aws:lambda:ap-southeast-1:533267173231:function:fbAdCarousel-checkStatus"
+ROLE_ARN = "arn:aws:iam::533267173231:role/Scheduler_fbAdCarousel-checkStatus"
 
 GOOGLE_DRIVE_ROOT_URL = 'https://www.googleapis.com/drive/v3/'
 GOOGLE_SHEETS_ROOT_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
@@ -36,6 +36,7 @@ TIMEOUT = 30
 CONCURRENCY = 10
 
 def slack_post_message(channel_id, token, message):
+    """Send a message to a Slack channel"""
     slack_payload = {
         'channel': channel_id,
         'text': message
@@ -45,6 +46,7 @@ def slack_post_message(channel_id, token, message):
     print(slack_request.json())
 
 def get_aws_secret(secret_name):
+    """Get a secret from AWS Parameter Store"""
     secret_name = urlparse.quote(secret_name, safe="")
     endpoint = f"{AWS_PARAM_STORE_ENDPOINT}?name={secret_name}&withDecryption=true"
     req = urllib.request.Request(endpoint)
@@ -84,11 +86,12 @@ def lambda_handler(event, context):
 
     # Create each carousel
     for carousel in carousels_table:
-        # Check if there is already a creative id
+        # Skip if the creative ID already exists
         if carousel[26] != '':
             print(f"Creative ID already exists for {carousel[0]}, skipping...")
             continue
 
+        # Skip if there is no carousel name
         if carousel[0] == '':
             print("Empty row, skipping...")
             continue
@@ -121,7 +124,7 @@ def lambda_handler(event, context):
             elif FILE_TYPES[file_extension] == 'VIDEO':
                 item = {
                     'video_id'     : split_string[1].split(';')[0],
-                    'picture'      : split_string[1].split(';')[1],
+                    'image_hash'   : split_string[1].split(';')[1],
                     'name'         : split_string[2],
                     'description'  : split_string[3],
                     'call_to_action': {

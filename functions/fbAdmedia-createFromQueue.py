@@ -43,6 +43,18 @@ def download_from_google_drive(file_id, file_name, gs_access_token):
         shutil.copyfileobj(gd_file_response.raw, f)
     print("File retrieved")
 
+def download_image_from_url(url, file_name):
+    response = requests.get(url, stream=True)
+    if response.status_code != 200:
+        print(f"Error downloading image: {response.json()}")
+        return {
+            'statusCode': response.status_code
+        }
+    with open(f'{TEMP_FILE_PATH}/{file_name}', 'wb') as f:
+        response.raw.decode_content = True
+        shutil.copyfileobj(response.raw, f)
+    print("Image downloaded")        
+
 def upload_image_media(file_name, ad_account_id, fb_access_token):
     fb_media_headers = {
         'Authorization': f'Bearer {fb_access_token}'
@@ -207,7 +219,9 @@ def lambda_handler(event, context):
     elif FILE_TYPES[file_extension] == 'VIDEO':
         media_hash  = upload_video_media(file_name, ad_account_id, fb_access_token)
         creative_id = create_ad_video_creative(file_name, page_id, media_hash, thumbnail_link, link_url, caption, headline, description, call_to_action, ad_account_id, fb_access_token)
-        media_hash = f'{media_hash};{thumbnail_link}'
+        download_image_from_url(thumbnail_link, f'{file_name}_thumbnail.jpg')
+        thumbnail_hash = upload_image_media(f'{file_name}_thumbnail.jpg', ad_account_id, fb_access_token)
+        media_hash = f'{media_hash};{thumbnail_hash}'
     else:
         print("Invalid file type")
         return {
@@ -217,8 +231,9 @@ def lambda_handler(event, context):
     # Update the media hash in the creatives sheet
     update_adcopy_table(file_name, media_hash, creative_id, spreadsheet_id, gs_access_token, row_number)
 
-    # Delete the temporary file
+    # Delete the temporary files
     os.remove(f'{TEMP_FILE_PATH}/{file_name}')
+    os.remove(f'{TEMP_FILE_PATH}/{file_name}_thumbnail.jpg')
     print("Temporary file deleted")
 
     # Send a success message to the SQS
